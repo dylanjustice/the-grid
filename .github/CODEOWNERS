@@ -1,0 +1,5 @@
+# Default code owners for the repository
+# Lines starting with '#' are comments and ignored.
+
+# Set @dylanjustice as the default owner for all files
+* @dylanjustice
