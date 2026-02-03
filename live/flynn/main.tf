@@ -4,7 +4,7 @@ provider "aws" {
     tags = {
       Project   = "the-grid"
       Terraform = true
-      Class     = "${path.module}"
+      Class     = "live/flynn"
     }
   }
 }
@@ -13,29 +13,24 @@ data "aws_availability_zones" "available" {
   region = var.region
 }
 
-resource "random_string" "vpc_suffix" {
-  length  = 4
-  upper   = false
-  lower   = true
-  numeric = true
-  special = false
-}
 
-module "vpc" {
-  source = "terraform-aws-modules/vpc/aws"
-
-  name = "thegrid-${random_string.vpc_suffix.result}"
-  cidr = "10.0.0.0/16"
-
+locals {
   azs             = data.aws_availability_zones.available.names
-  private_subnets = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
-  public_subnets  = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
+  az_count        = length(local.azs)
+  subnet_newbits  = var.subnet_prefix - var.vpc_cidr_prefix
+  private_subnets = [for i in range(local.az_count) : cidrsubnet(var.vpc_cidr, local.subnet_newbits, i)]
+  public_subnets  = [for i in range(local.az_count) : cidrsubnet(var.vpc_cidr, local.subnet_newbits, i + local.az_count)]
+}
 
+module "alpha_vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "6.6.0"
+
+  name               = "thegrid-alpha"
+  cidr               = var.vpc_cidr
+  azs                = local.azs
+  private_subnets    = local.private_subnets
+  public_subnets     = local.public_subnets
   enable_nat_gateway = true
-  enable_vpn_gateway = true
-
 }
 
-output "azs" {
-  value = data.aws_availability_zones.available.names
-}
