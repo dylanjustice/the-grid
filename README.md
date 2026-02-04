@@ -4,4 +4,6 @@ My own personal frontier for exploring real world tech problems. Disc wars and L
 
 ## Requirements
 
-- Terraform 1.14+
+- terraform 1.14+
+- kubectl
+- argocd

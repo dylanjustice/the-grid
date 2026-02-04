@@ -1,0 +1,13 @@
+apiVersion: v2
+name: the-grid-argo-workflows
+description: A wrapper Helm chart that deploys Argo Workflows using the upstream argo-helm chart
+type: application
+version: 0.1.0
+appVersion: "0.47.3"
+dependencies:
+  - name: argo-workflows
+    version: "0.47.3"
+    repository: "https://argoproj.github.io/argo-helm"
+    tags:
+      - argo
+      - workflows

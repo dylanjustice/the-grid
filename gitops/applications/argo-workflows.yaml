@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argo-workflows
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    name: argo-workflows
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/dylanjustice/the-grid
+    targetRevision: HEAD
+    path: gitops/workloads/argo-workflows
+    chart: the-grid-argo-workflows
+    helm:
+      releaseName: argo-workflows
+      skipCrds: false
+      namespace: the-grid-workflows
+  destination:
+    name: getting-started-gitops
+    namespace: the-grid-workflows
+  syncPolicy:
+    automated:
+      enabled: true
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s # the amount to back off. Default unit is seconds, but could also be a duration (e.g. "2m", "1h")
+        factor: 2 # a factor to multiply the base duration after each failed retry
+        maxDuration: 3m # the maximum amount of time allowed for the backoff strategy
