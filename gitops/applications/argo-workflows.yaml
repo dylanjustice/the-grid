@@ -17,13 +17,11 @@ spec:
     helm:
       releaseName: argo-workflows
       skipCrds: false
-      namespace: the-grid-workflows
   destination:
     name: getting-started-gitops
     namespace: the-grid-workflows
   syncPolicy:
     automated:
-      enabled: true
       prune: true
       selfHeal: true
       allowEmpty: false
@@ -32,6 +30,6 @@ spec:
     retry:
       limit: 5
       backoff:
-        duration: 5s # the amount to back off. Default unit is seconds, but could also be a duration (e.g. "2m", "1h")
-        factor: 2 # a factor to multiply the base duration after each failed retry
-        maxDuration: 3m # the maximum amount of time allowed for the backoff strategy
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
