@@ -13,12 +13,11 @@ spec:
     repoURL: https://github.com/dylanjustice/the-grid
     targetRevision: HEAD
     path: gitops/workloads/argo-workflows
-    chart: the-grid-argo-workflows
     helm:
       releaseName: argo-workflows
       skipCrds: false
   destination:
-    name: getting-started-gitops
+    name: in-cluster
     namespace: the-grid-workflows
   syncPolicy:
     automated:

@@ -13,12 +13,11 @@ spec:
     repoURL: https://github.com/dylanjustice/the-grid
     targetRevision: HEAD
     path: gitops/workloads/playwright-synthetics
-    chart: the-grid-playwright-synthetics
     helm:
       releaseName: playwright-synthetics
       skipCrds: false
   destination:
-    name: getting-started-gitops
+    name: in-cluster
     namespace: the-grid-workflows
   syncPolicy:
     automated:
