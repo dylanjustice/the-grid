@@ -202,9 +202,11 @@ module "eks" {
     initial = {
       instance_types = ["m5.large"]
 
-      min_size     = 1
-      max_size     = 3
-      desired_size = 2
+      min_size      = 1
+      max_size      = 3
+      desired_size  = 2
+      capacity_type = "SPOT"
+
     }
   }
   # EKS Addons
