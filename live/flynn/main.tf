@@ -7,10 +7,18 @@ locals {
   subnet_newbits  = var.subnet_prefix - var.vpc_cidr_prefix
   private_subnets = [for i in range(local.az_count) : cidrsubnet(var.vpc_cidr, local.subnet_newbits, i)]
   public_subnets  = [for i in range(local.az_count) : cidrsubnet(var.vpc_cidr, local.subnet_newbits, i + local.az_count)]
+  repositories    = toset(["flynn/playwright-synthetics"])
 }
 
 module "argocd_cluster" {
   source             = "../../modules/getting-started-argocd"
   region             = var.region
   kubernetes_version = "1.34"
+}
+
+
+module "ecr" {
+  for_each        = local.repositories
+  source          = "../../modules/ecr"
+  repository_name = each.key
 }
