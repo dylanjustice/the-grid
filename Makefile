@@ -3,7 +3,7 @@
 # Variables
 AWS_ACCOUNT ?= $(shell aws sts get-caller-identity --query Account --output text)
 AWS_REGION ?= us-east-1
-ECR_REPO_NAME ?= the-grid
+ECR_REPO_NAME ?= flynn/playwright-synthetics
 TERRAFORM_AUTO_APPROVE ?= false
 
 # Derive ECR URI from account and region
