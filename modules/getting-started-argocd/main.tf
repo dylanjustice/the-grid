@@ -190,9 +190,10 @@ module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 19.13"
 
-  cluster_name                   = local.name
-  cluster_version                = local.cluster_version
-  cluster_endpoint_public_access = true
+  cluster_name                           = local.name
+  cluster_version                        = local.cluster_version
+  cluster_endpoint_public_access         = true
+  cloudwatch_log_group_retention_in_days = 1
 
 
   vpc_id     = module.vpc.vpc_id
@@ -200,11 +201,12 @@ module "eks" {
 
   eks_managed_node_groups = {
     initial = {
-      instance_types = ["m5.large"]
+      instance_types = ["t4g.small"]
       min_size       = 1
       max_size       = 3
       desired_size   = 2
       capacity_type  = "SPOT"
+      ami_type       = "AL2023_ARM_64_STANDARD"
     }
   }
   # EKS Addons

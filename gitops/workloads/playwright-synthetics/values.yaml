@@ -2,16 +2,24 @@ workflows:
   - name: "Playwright Synthetics Workflow"
     description: "A workflow to run Playwright synthetics tests."
     schedule: "0 0 * * *" # Run daily at midnight
-    jobs:
-      - name: "Run Playwright Tests"
-        steps:
-          - name: "Checkout Code"
-            uses: actions/checkout@v2
-          - name: "Set up Node.js"
-            uses: actions/setup-node@v2
-            with:
-              node-version: "14"
-          - name: "Install Dependencies"
-            run: npm install
-          - name: "Run Tests"
-            run: npm test
+    templates:
+      - name: "run"
+        container:
+          image: "393657359434.dkr.ecr.us-east-2.amazonaws.com/flynn/playwright-synthetics:latest"
+          imagePullPolicy: Always
+          env:
+            - name: TARGET_URL
+              value: "https://example.com"
+            - name: PUSHGATEWAY_URL
+              value: "http://pushgateway.monitoring.svc:9091"
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+serviceAccount:
+  create: true
+  name: "playwright-synthetics-sa"
+  annotations: {}

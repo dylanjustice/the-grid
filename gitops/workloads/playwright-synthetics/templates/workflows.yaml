@@ -1,0 +1,15 @@
+{{- range $workflow := .Values.workflows }}
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: {{ $workflow.name | replace " " "-" | lower }}-
+spec:
+  entrypoint: main
+  {{- if .Values.serviceAccount.create }}
+  serviceAccountName: {{ include "..serviceAccountName" . }}
+  {{- end }}
+  schedules:
+    - {{ $workflow.schedule }}
+  templates:
+    {{ toYAML $workflow.templates | nindent 4 }}
+{{- end }}

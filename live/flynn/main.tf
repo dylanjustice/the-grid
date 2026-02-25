@@ -14,6 +14,10 @@ module "argocd_cluster" {
   source             = "../../modules/getting-started-argocd"
   region             = var.region
   kubernetes_version = "1.34"
+  addons = {
+    enable_aws_load_balancer_controller = false
+    enable_metrics_server               = true
+  }
 }
 
 
