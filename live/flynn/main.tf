@@ -1,3 +1,4 @@
+data "aws_caller_identity" "current" {}
 data "aws_availability_zones" "available" {
   state = "available"
 }
@@ -28,6 +29,8 @@ module "k3s" {
   allowed_ingress_ranges = [
     "74.99.165.44/32"
   ]
+  region     = var.region
+  account_id = data.aws_caller_identity.current.account_id
 }
 
 module "ecr" {

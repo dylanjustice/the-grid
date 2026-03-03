@@ -15,3 +15,11 @@ variable "allowed_ingress_ranges" {
 variable "vpc_id" {
   type = string
 }
+
+variable "region" {
+  type = string
+}
+
+variable "account_id" {
+  type = string
+}

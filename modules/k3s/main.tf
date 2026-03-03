@@ -46,6 +46,11 @@ resource "aws_security_group_rule" "k3s_kubectl" {
   security_group_id = aws_security_group.k3s.id
 }
 
+resource "random_string" "suffix" {
+  length  = 6
+  upper   = false
+  special = false
+}
 resource "aws_instance" "k3s" {
   ami                         = data.aws_ami.al2023_arm.id
   instance_type               = "t4g.medium"
@@ -58,9 +63,40 @@ resource "aws_instance" "k3s" {
     volume_type = "gp3"
   }
 
-  user_data = file("${path.module}/userdata.sh")
+  user_data            = file("${path.module}/userdata.sh")
+  iam_instance_profile = aws_iam_instance_profile.k3s.name
+  metadata_options {
+    http_endpoint = "enabled"
+    http_tokens   = "required"
+  }
 
   tags = {
-    Name = "k3s-node"
+    Name = "k3s-node-${random_string.suffix.result}"
   }
+}
+
+data "aws_iam_policy_document" "k3s_assume_role" {
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "k3s" {
+  name               = "k3s-instance-role"
+  assume_role_policy = data.aws_iam_policy_document.k3s_assume_role.json
+}
+
+resource "aws_iam_role_policy_attachment" "k3s_ssm" {
+  role       = aws_iam_role.k3s.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_instance_profile" "k3s" {
+  name = "k3s-instance-profile"
+  role = aws_iam_role.k3s.name
 }

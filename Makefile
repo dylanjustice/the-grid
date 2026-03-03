@@ -10,6 +10,10 @@ TERRAFORM_AUTO_APPROVE ?= false
 ECR_URL = $(AWS_ACCOUNT).dkr.ecr.$(AWS_REGION).amazonaws.com
 ECR_REPO = $(ECR_URL)/$(ECR_REPO_NAME)
 
+# k3s instance connection
+INSTANCE_ID := $(shell terraform -chdir=live/flynn output -raw k3s_instance_id)
+AWS_REGION := us-east-2
+
 help:
 	@echo "Available targets:"
 	@echo "  docker-login          - Login to AWS ECR"
@@ -23,6 +27,7 @@ help:
 	@echo "  live-plan             - Terraform plan in live/flynn/"
 	@echo "  live-apply            - Terraform apply in live/flynn/"
 	@echo "  live-destroy          - Terraform destroy in live/flynn/"
+	@echo "  connect               - Connect to k3s instance via SSM Session Manager"
 	@echo ""
 	@echo "Variables:"
 	@echo "  AWS_ACCOUNT (default: auto-detected)"
@@ -76,6 +81,12 @@ live-apply: live-plan
 live-destroy: live-init
 	@echo "Running terraform destroy in live/flynn/..."
 	cd live/flynn && terraform destroy $(if $(filter true,$(TERRAFORM_AUTO_APPROVE)),-auto-approve,)
+
+# Connect to k3s instance using SSM Session Manager
+connect:
+	aws ssm start-session \
+		--region $(AWS_REGION) \
+		--target $(INSTANCE_ID)
 
 # Convenience targets
 all-init: bootstrap-init live-init
