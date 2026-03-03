@@ -88,6 +88,9 @@ connect:
 		--region $(AWS_REGION) \
 		--target $(INSTANCE_ID)
 
+get-kubeconfig:
+	./scripts/get-kubeconfig.sh
+
 # Convenience targets
 all-init: bootstrap-init live-init
 all-plan: bootstrap-plan live-plan

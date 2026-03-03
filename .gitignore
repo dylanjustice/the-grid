@@ -114,4 +114,9 @@ tmp/
 temp/
 logs/
 
+#=========================
+# kubectl
+kubeconfig.yaml
+#=========================
+
 # End of file
