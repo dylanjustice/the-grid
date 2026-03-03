@@ -28,6 +28,9 @@ help:
 	@echo "  live-apply            - Terraform apply in live/flynn/"
 	@echo "  live-destroy          - Terraform destroy in live/flynn/"
 	@echo "  connect               - Connect to k3s instance via SSM Session Manager"
+	@echo "  get-kubeconfig        - Retrieve kubeconfig for k3s cluster"
+	@echo "  tunnel-start          - Start SSM port forwarding to k3s API
+	@echo "  tunnel-stop           - Stop all SSM tunnels"
 	@echo ""
 	@echo "Variables:"
 	@echo "  AWS_ACCOUNT (default: auto-detected)"
@@ -90,6 +93,26 @@ connect:
 
 get-kubeconfig:
 	./scripts/get-kubeconfig.sh
+
+tunnel-start:
+	@echo "Starting SSM port forward to $(INSTANCE_ID)..."
+	aws ssm start-session \
+		--region $(AWS_REGION) \
+		--target $(INSTANCE_ID) \
+		--document-name AWS-StartPortForwardingSession \
+		--parameters '{"portNumber":["6443"],"localPortNumber":["6443"]}' \
+		> tunnel.log 2>&1 &
+	@echo "Tunnel running in background."
+
+tunnel-stop:
+	@echo "Stopping all SSM tunnels..."
+	@PIDS=$$(pgrep -f "aws ssm start-session" || true); \
+	if [ -n "$$PIDS" ]; then \
+		echo "Killing: $$PIDS"; \
+		kill $$PIDS || true; \
+	else \
+		echo "No tunnel processes found."; \
+	fi
 
 # Convenience targets
 all-init: bootstrap-init live-init

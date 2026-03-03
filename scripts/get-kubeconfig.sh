@@ -45,4 +45,37 @@ aws ssm get-command-invocation \
 sed -i '' 's/127.0.0.1/localhost/' kubeconfig.yaml 2>/dev/null || \
 sed -i 's/127.0.0.1/localhost/' kubeconfig.yaml
 
-echo "kubeconfig.yaml written cleanly."
+
+CLUSTER_SERVER=$(kubectl --kubeconfig kubeconfig.yaml config view --raw -o jsonpath='{.clusters[0].cluster.server}')
+CLUSTER_CA=$(kubectl --kubeconfig kubeconfig.yaml config view --raw -o jsonpath='{.clusters[0].cluster.certificate-authority-data}')
+CLIENT_CERT=$(kubectl --kubeconfig kubeconfig.yaml config view --raw -o jsonpath='{.users[0].user.client-certificate-data}')
+CLIENT_KEY=$(kubectl --kubeconfig kubeconfig.yaml config view --raw -o jsonpath='{.users[0].user.client-key-data}')
+CLUSTER_SERVER="https://localhost:6443"
+
+GRID_DIR="$HOME/.kube/the-grid"
+mkdir -p "$GRID_DIR"
+chmod 700 "$GRID_DIR"
+
+echo "$CLUSTER_CA" | base64 --decode > "$GRID_DIR/ca.crt"
+echo "$CLIENT_CERT" | base64 --decode > "$GRID_DIR/client.crt"
+echo "$CLIENT_KEY" | base64 --decode > "$GRID_DIR/client.key"
+
+chmod 600 "$GRID_DIR"/*
+
+kubectl config delete-context the-grid 2>/dev/null || true
+kubectl config delete-cluster the-grid 2>/dev/null || true
+kubectl config delete-user the-grid-admin 2>/dev/null || true
+
+kubectl config set-cluster the-grid \
+  --server="$CLUSTER_SERVER" \
+  --certificate-authority="$GRID_DIR/ca.crt"
+
+kubectl config set-credentials the-grid-admin \
+  --client-certificate="$GRID_DIR/client.crt" \
+  --client-key="$GRID_DIR/client.key"
+
+kubectl config set-context the-grid \
+  --cluster=the-grid \
+  --user=the-grid-admin
+
+kubectl config use-context the-grid

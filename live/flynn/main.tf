@@ -27,7 +27,7 @@ module "k3s" {
   subnet_id = module.alpha_vpc.public_subnets[0]
   vpc_id    = module.alpha_vpc.vpc_id
   allowed_ingress_ranges = [
-    "74.99.165.44/32"
+    "74.99.165.44/32",
   ]
   region     = var.region
   account_id = data.aws_caller_identity.current.account_id
