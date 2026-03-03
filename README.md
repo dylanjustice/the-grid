@@ -24,7 +24,23 @@ Synthetic reality, real lessons.
 
 ## Installation & Setup
 
-### 1. AWS SSO Configuration
+### 1. AWS CLI & Session Manager Plugin
+
+Install AWS CLI and the Session Manager plugin for secure session access:
+
+```bash
+# Install AWS CLI
+brew install awscli
+
+# Install Session Manager plugin
+brew install --cask session-manager-plugin
+
+# Verify installations
+aws --version
+session-manager-plugin --version
+```
+
+### 2. AWS SSO Configuration
 
 Install and configure [Granted](https://granted.dev/) or [Assume](https://github.com/remotecom/assume) for SSO access:
 
@@ -51,7 +67,7 @@ brew install remotecom/tap/assume
 assume <account-id>
 ```
 
-### 2. Node.js & Node Version Manager
+### 3. Node.js & Node Version Manager
 
 Install and manage Node.js with `nvm`:
 
@@ -68,7 +84,7 @@ node --version
 npm --version
 ```
 
-### 3. Docker
+### 4. Docker
 
 Install Docker Desktop or Docker Engine:
 
@@ -79,7 +95,7 @@ brew install docker
 # Or download Docker Desktop: https://www.docker.com/products/docker-desktop
 ```
 
-### 4. Terraform
+### 5. Terraform
 
 Install Terraform:
 
@@ -91,7 +107,7 @@ brew install terraform
 terraform --version
 ```
 
-### 5. Kubernetes Tools
+### 6. Kubernetes Tools
 
 Install kubectl and ArgoCD CLI:
 
@@ -103,7 +119,7 @@ brew install kubectl
 brew install argocd
 ```
 
-### 6. Playwright (for testing)
+### 7. Playwright (for testing)
 
 Playwright is used for end-to-end testing and synthetic monitoring. Dependencies are managed via npm:
 
