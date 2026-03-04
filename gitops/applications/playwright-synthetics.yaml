@@ -18,7 +18,7 @@ spec:
       skipCrds: false
   destination:
     name: in-cluster
-    namespace: the-grid-workflows
+    namespace: the-grid-synthetics
   syncPolicy:
     automated:
       prune: true
