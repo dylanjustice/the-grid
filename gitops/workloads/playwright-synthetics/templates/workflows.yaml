@@ -3,7 +3,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  generateName: {{ $workflow.name | replace " " "-" | lower }}-
+  name: {{ $workflow.name | replace " " "-" | lower }}
 spec:
   entrypoint: main
   {{- if $.Values.serviceAccount.create }}
