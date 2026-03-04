@@ -106,7 +106,7 @@ tunnel-start:
 
 tunnel-stop:
 	@echo "Stopping all SSM tunnels..."
-	@PIDS=$$(pgrep -f "aws ssm start-session" || true); \
+	@PIDS=$$(pgrep -af "AWS-StartPortForwardingSession"); \
 	if [ -n "$$PIDS" ]; then \
 		echo "Killing: $$PIDS"; \
 		kill $$PIDS || true; \
