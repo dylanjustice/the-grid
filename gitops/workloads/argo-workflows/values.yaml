@@ -1,1 +1,3 @@
-# using defaults for now
+controller:
+  workflowNamespaces:
+    - the-grid-synthetics
