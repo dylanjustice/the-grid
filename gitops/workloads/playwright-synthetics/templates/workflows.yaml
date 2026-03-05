@@ -5,7 +5,7 @@ kind: Workflow
 metadata:
   name: {{ $workflow.name | replace " " "-" | lower }}
 spec:
-  entrypoint: main
+  entrypoint: {{ $workflow.entrypoint }}
   {{- if $.Values.serviceAccount.create }}
   serviceAccountName: {{ $serviceAccountName }}
   {{- end }}
