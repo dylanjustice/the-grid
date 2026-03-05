@@ -10,7 +10,7 @@ spec:
   serviceAccountName: {{ $serviceAccountName }}
   {{- end }}
   schedules:
-    - {{ $workflow.schedule }}
+    - {{ $workflow.schedule | quote}}
   templates:
     {{ toYaml $workflow.templates | nindent 4 }}
 {{- end }}
