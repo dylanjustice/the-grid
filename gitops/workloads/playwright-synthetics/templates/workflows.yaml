@@ -1,7 +1,7 @@
 {{- $serviceAccountName := include "the-grid-playwright-synthetics.serviceAccountName" . -}}
 {{- range $workflow := .Values.workflows }}
 apiVersion: argoproj.io/v1alpha1
-kind: Workflow
+kind: CronWorkflow
 metadata:
   name: {{ $workflow.name | replace " " "-" | lower }}
 spec:
