@@ -1,3 +1,4 @@
-controller:
-  workflowNamespaces:
-    - the-grid-synthetics
+argo-workflows:
+  controller:
+    workflowNamespaces:
+      - the-grid-synthetics
