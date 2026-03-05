@@ -1,5 +1,4 @@
 argo-workflows:
   singleNamespace: false
-  controller:
-    workflowNamespaces:
-      - the-grid-synthetics
+  workflowNamespaces:
+    - the-grid-synthetics
