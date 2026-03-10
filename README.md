@@ -205,10 +205,10 @@ Before running any AWS commands or Terraform operations, ensure you're authentic
 
 ```bash
 # Using Granted
-granted assume production
+granted assume
 
 # Using Assume
-assume 123456789012
+assume
 
 # Verify access
 aws sts get-caller-identity
@@ -220,14 +220,22 @@ Configure the following environment variables as needed:
 
 ```bash
 # AWS configuration
-export AWS_REGION=us-east-1
-export AWS_ACCOUNT=123456789012
+export AWS_REGION=us-east-2
+```
 
-# Terraform overrides
-export TERRAFORM_AUTO_APPROVE=false
+## kubectl
 
-# Docker / ECR
-export ECR_REPO_NAME=the-grid
+Run `kubectl` against the lab environment in k3s
+
+```bash
+# Start a tunnel session
+make tunnel-start
+
+# Check nodes
+kubectl get nodes
+
+# Kill tunnels
+make tunnel-stop
 ```
 
 ## Getting Started
