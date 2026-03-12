@@ -1,4 +1,4 @@
-.PHONY: help docker-login docker-build terraform-init terraform-plan terraform-apply terraform-destroy argo-ui argo-sync
+.PHONY: help docker-login docker-build terraform-init terraform-plan terraform-apply terraform-destroy argo-ui argo-sync k3s-destroy k3s-start
 
 # Variables
 AWS_ACCOUNT ?= $(shell aws sts get-caller-identity --query Account --output text)
@@ -33,6 +33,8 @@ help:
 	@echo "  tunnel-stop           - Stop all SSM tunnels"
 	@echo "  argo-ui               - Port-forward Argo Workflows UI to https://localhost:2746"
 	@echo "  argo-sync             - Force ArgoCD sync on all applications"
+	@echo "  k3s-destroy           - Destroy only the k3s instance to save cost"
+	@echo "  k3s-start             - Recreate the k3s instance"
 	@echo ""
 	@echo "Variables:"
 	@echo "  AWS_ACCOUNT (default: auto-detected)"
@@ -128,6 +130,10 @@ argo-sync:
 		kubectl patch application $$app -n argocd --type merge \
 			-p "{\"operation\":{\"initiatedBy\":{\"username\":\"cli\"},\"sync\":{\"revision\":\"HEAD\"}}}"; \
 	done
+
+k3s-destroy: live-init
+	@echo "Destroying k3s instance..."
+	cd live/flynn && terraform destroy -target=module.k3s.aws_instance.k3s $(if $(filter true,$(TERRAFORM_AUTO_APPROVE)),-auto-approve,)
 
 # Convenience targets
 all-init: bootstrap-init live-init
