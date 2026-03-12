@@ -1,4 +1,4 @@
-.PHONY: help docker-login docker-build terraform-init terraform-plan terraform-apply terraform-destroy argo-ui
+.PHONY: help docker-login docker-build terraform-init terraform-plan terraform-apply terraform-destroy argo-ui argo-sync
 
 # Variables
 AWS_ACCOUNT ?= $(shell aws sts get-caller-identity --query Account --output text)
@@ -32,6 +32,7 @@ help:
 	@echo "  tunnel-start          - Start SSM port forwarding to k3s API
 	@echo "  tunnel-stop           - Stop all SSM tunnels"
 	@echo "  argo-ui               - Port-forward Argo Workflows UI to https://localhost:2746"
+	@echo "  argo-sync             - Force ArgoCD sync on all applications"
 	@echo ""
 	@echo "Variables:"
 	@echo "  AWS_ACCOUNT (default: auto-detected)"
@@ -118,6 +119,15 @@ tunnel-stop:
 argo-ui:
 	@echo "Port-forwarding Argo Workflows UI to https://localhost:2746..."
 	kubectl port-forward svc/argo-workflows-server -n the-grid-workflows 2746:2746
+
+ARGOCD_APPS := argo-workflows playwright-synthetics
+
+argo-sync:
+	@for app in $(ARGOCD_APPS); do \
+		echo "Syncing $$app..."; \
+		kubectl patch application $$app -n argocd --type merge \
+			-p "{\"operation\":{\"initiatedBy\":{\"username\":\"cli\"},\"sync\":{\"revision\":\"HEAD\"}}}"; \
+	done
 
 # Convenience targets
 all-init: bootstrap-init live-init
