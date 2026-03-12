@@ -78,7 +78,7 @@ resource "aws_instance" "k3s" {
     Name = "k3s-node-${random_string.suffix.result}"
   }
   lifecycle {
-    prevent_destroy = true # safeguard against accidental deletion of the k3s cluster
+    # prevent_destroy = true # safeguard against accidental deletion of the k3s cluster
     replace_triggered_by = [
       terraform_data.k3s_user_data.output,
     ]
