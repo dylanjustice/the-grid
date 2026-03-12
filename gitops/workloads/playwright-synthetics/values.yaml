@@ -7,12 +7,9 @@ workflows:
       - name: "run"
         container:
           image: "393657359434.dkr.ecr.us-east-2.amazonaws.com/flynn/playwright-synthetics:latest"
+          command: ["npx", "playwright", "test"]
           imagePullPolicy: Always
-          env:
-            - name: TARGET_URL
-              value: "https://example.com"
-            - name: PUSHGATEWAY_URL
-              value: "http://pushgateway.monitoring.svc:9091"
+          env: []
           resources:
             requests:
               cpu: "250m"

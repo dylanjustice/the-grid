@@ -51,6 +51,10 @@ resource "random_string" "suffix" {
   upper   = false
   special = false
 }
+
+resource "terraform_data" "k3s_user_data" {
+  input = file("${path.module}/userdata.sh")
+}
 resource "aws_instance" "k3s" {
   ami                         = data.aws_ami.al2023_arm.id
   instance_type               = "t4g.medium"
@@ -63,7 +67,7 @@ resource "aws_instance" "k3s" {
     volume_type = "gp3"
   }
 
-  user_data            = file("${path.module}/userdata.sh")
+  user_data            = terraform_data.k3s_user_data.input
   iam_instance_profile = aws_iam_instance_profile.k3s.name
   metadata_options {
     http_endpoint = "enabled"
@@ -72,6 +76,12 @@ resource "aws_instance" "k3s" {
 
   tags = {
     Name = "k3s-node-${random_string.suffix.result}"
+  }
+  lifecycle {
+    prevent_destroy = true # safeguard against accidental deletion of the k3s cluster
+    replace_triggered_by = [
+      terraform_data.k3s_user_data.output,
+    ]
   }
 }
 
@@ -99,4 +109,23 @@ resource "aws_iam_role_policy_attachment" "k3s_ssm" {
 resource "aws_iam_instance_profile" "k3s" {
   name = "k3s-instance-profile"
   role = aws_iam_role.k3s.name
+}
+
+data "aws_iam_policy_document" "k3s_ecr_access" {
+  statement {
+    actions = [
+      "ecr:GetAuthorizationToken",
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:GetDownloadUrlForLayer",
+      "ecr:BatchGetImage"
+    ]
+    resources = ["*"]
+    effect    = "Allow"
+  }
+}
+
+resource "aws_iam_role_policy" "k3s_ecr_access" {
+  name   = "k3s-ecr-access"
+  role   = aws_iam_role.k3s.id
+  policy = data.aws_iam_policy_document.k3s_ecr_access.json
 }
