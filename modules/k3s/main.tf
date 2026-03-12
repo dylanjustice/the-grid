@@ -27,25 +27,6 @@ resource "aws_security_group_rule" "k3s_egress" {
   security_group_id = aws_security_group.k3s.id
 }
 
-resource "aws_security_group_rule" "k3s_ssh" {
-  for_each          = var.allowed_ingress_ranges
-  type              = "ingress"
-  from_port         = 22
-  to_port           = 22
-  protocol          = "tcp"
-  cidr_blocks       = [each.value]
-  security_group_id = aws_security_group.k3s.id
-}
-resource "aws_security_group_rule" "k3s_kubectl" {
-  for_each          = var.allowed_ingress_ranges
-  type              = "ingress"
-  from_port         = 6443
-  to_port           = 6443
-  protocol          = "tcp"
-  cidr_blocks       = [each.value]
-  security_group_id = aws_security_group.k3s.id
-}
-
 resource "random_string" "suffix" {
   length  = 6
   upper   = false
@@ -60,7 +41,7 @@ resource "aws_instance" "k3s" {
   instance_type               = "t4g.medium"
   subnet_id                   = var.subnet_id
   vpc_security_group_ids      = [aws_security_group.k3s.id]
-  associate_public_ip_address = true
+  associate_public_ip_address = false
 
   root_block_device {
     volume_size = 30
