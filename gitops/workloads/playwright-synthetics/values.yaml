@@ -1,7 +1,7 @@
 workflows:
   - name: "Playwright Synthetics Workflow"
     description: "A workflow to run Playwright synthetics tests."
-    schedule: "* * * * *" # Run daily at midnight
+    schedule: "*/5 * * * *" # Run daily at midnight
     entrypoint: "run"
     templates:
       - name: "run"
