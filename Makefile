@@ -1,4 +1,4 @@
-.PHONY: help docker-login docker-build terraform-init terraform-plan terraform-apply terraform-destroy
+.PHONY: help docker-login docker-build terraform-init terraform-plan terraform-apply terraform-destroy argo-ui
 
 # Variables
 AWS_ACCOUNT ?= $(shell aws sts get-caller-identity --query Account --output text)
@@ -31,6 +31,7 @@ help:
 	@echo "  get-kubeconfig        - Retrieve kubeconfig for k3s cluster"
 	@echo "  tunnel-start          - Start SSM port forwarding to k3s API
 	@echo "  tunnel-stop           - Stop all SSM tunnels"
+	@echo "  argo-ui               - Port-forward Argo Workflows UI to https://localhost:2746"
 	@echo ""
 	@echo "Variables:"
 	@echo "  AWS_ACCOUNT (default: auto-detected)"
@@ -113,6 +114,10 @@ tunnel-stop:
 	else \
 		echo "No tunnel processes found."; \
 	fi
+
+argo-ui:
+	@echo "Port-forwarding Argo Workflows UI to https://localhost:2746..."
+	kubectl port-forward svc/argo-workflows-server -n the-grid-workflows 2746:2746
 
 # Convenience targets
 all-init: bootstrap-init live-init

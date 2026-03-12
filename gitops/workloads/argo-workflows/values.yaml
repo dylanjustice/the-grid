@@ -2,3 +2,6 @@ argo-workflows:
   singleNamespace: false
   workflowNamespaces:
     - the-grid-synthetics
+  server:
+    authModes:
+      - server
