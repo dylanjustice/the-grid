@@ -3,6 +3,9 @@ argo-workflows:
   controller:
     workflowNamespaces:
       - the-grid-synthetics
+  workflow:
+    serviceAccount:
+      name: playwright-synthetics-sa
   server:
     authModes:
       - server

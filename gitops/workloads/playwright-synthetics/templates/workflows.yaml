@@ -5,12 +5,12 @@ kind: CronWorkflow
 metadata:
   name: {{ $workflow.name | replace " " "-" | lower }}
 spec:
-  {{- if $.Values.serviceAccount.create }}
-  serviceAccountName: {{ $serviceAccountName }}
-  {{- end }}
   schedules:
     - {{ $workflow.schedule | quote}}
   workflowSpec:
+    {{- if $.Values.serviceAccount.create }}
+    serviceAccountName: {{ $serviceAccountName }}
+    {{- end }}
     entrypoint: {{ $workflow.entrypoint }}
     templates:
       {{ toYaml $workflow.templates | nindent 4 }}
