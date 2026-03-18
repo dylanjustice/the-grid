@@ -135,6 +135,12 @@ k3s-destroy: live-init
 	@echo "Destroying k3s instance..."
 	cd live/flynn && terraform destroy -target=module.k3s.aws_instance.k3s $(if $(filter true,$(TERRAFORM_AUTO_APPROVE)),-auto-approve,)
 
+k3s-kubeconfig:
+	sh ./scripts/get-kubeconfig.sh
+
+k3s-bootstrap:
+	sh ./scripts/bootstrap-k3s.sh
+
 # Convenience targets
 all-init: bootstrap-init live-init
 all-plan: bootstrap-plan live-plan

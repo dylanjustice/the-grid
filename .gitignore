@@ -66,6 +66,7 @@ coverage.out
 *.tfstate
 *.tfstate.*
 crash.log
+tfplan
 
 # Crash recovery
 override.tf
