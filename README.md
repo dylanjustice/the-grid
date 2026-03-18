@@ -42,29 +42,30 @@ session-manager-plugin --version
 
 ### 2. AWS SSO Configuration
 
+```bash
+aws configure sso
+# SSO session name (Recommended): the-grid
+# SSO start URL [None]: https://d-90661fcf12.awsapps.com/start
+# SSO region [None]: us-east-1
+# SSO registration scopes [None]: sso:account:access
+```
+
 Install and configure [Granted](https://granted.dev/) or [Assume](https://github.com/remotecom/assume) for SSO access:
 
 **Using Granted:**
 
 ```bash
 # Install Granted
-brew install granted
+brew tap fwdcloudsec/granted
+brew install fwdcloudsec/granted/granted
 
-# Configure your AWS profiles
-granted setup
-
-# Login to an AWS account
-granted assume <profile-name>
+granted -v
 ```
 
 **Using Assume:**
 
 ```bash
-# Install Assume
-brew install remotecom/tap/assume
-
-# Login to an AWS account
-assume <account-id>
+assume
 ```
 
 ### 3. Node.js & Node Version Manager
@@ -75,11 +76,9 @@ Install and manage Node.js with `nvm`:
 # Install nvm (if not already installed)
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
 
-# Install the required Node version
-nvm install 18
-nvm use 18
+nvm install 23
+nvm use 23
 
-# Verify installation
 node --version
 npm --version
 ```
@@ -89,10 +88,7 @@ npm --version
 Install Docker Desktop or Docker Engine:
 
 ```bash
-# macOS (via Homebrew)
 brew install docker
-
-# Or download Docker Desktop: https://www.docker.com/products/docker-desktop
 ```
 
 ### 5. Terraform
@@ -100,10 +96,8 @@ brew install docker
 Install Terraform:
 
 ```bash
-# macOS (via Homebrew)
 brew install terraform
 
-# Verify installation
 terraform --version
 ```
 
@@ -112,10 +106,8 @@ terraform --version
 Install kubectl and ArgoCD CLI:
 
 ```bash
-# kubectl
 brew install kubectl
 
-# ArgoCD CLI
 brew install argocd
 ```
 
@@ -124,10 +116,8 @@ brew install argocd
 Playwright is used for end-to-end testing and synthetic monitoring. Dependencies are managed via npm:
 
 ```bash
-# Install Playwright dependencies (already in package.json)
+cd src
 npm install
-
-# Install browser binaries
 npx playwright install
 ```
 
@@ -161,66 +151,29 @@ make docker-build
 make docker-push
 ```
 
-### Terraform Operations
+### Spinning Up The Lab
 
 ```bash
-# Initialize Terraform in bootstrap
-make bootstrap-init
-
-# Plan infrastructure changes in bootstrap
-make bootstrap-plan
-
-# Apply infrastructure changes in bootstrap
-make bootstrap-apply
-
-# Destroy bootstrap infrastructure
-make bootstrap-destroy
-
-# Similarly for live/flynn environment:
-make live-init
-make live-plan
+# Start the instance
 make live-apply
-make live-destroy
+
+# Open an SSM tunnel to the instance
+make tunnel-start
+
+# Configure kubectl
+./scripts/get-kubeconfig.sh
+
+# Start infrastructure
+./scripts/bootstrap-k3s.sh
 ```
 
-### Running Tests
+### Spinning Down the Lab
 
 ```bash
-# Install dependencies
-npm install
+# Keep everything but the k3s instance
+make k3s-destroy
 
-# Run Playwright tests
-npm test
-
-# Run tests with UI mode
-npm run test:ui
-
-# View test report
-npm run test:report
-```
-
-## AWS Access with Granted/Assume
-
-Before running any AWS commands or Terraform operations, ensure you're authenticated:
-
-```bash
-# Using Granted
-granted assume
-
-# Using Assume
-assume
-
-# Verify access
-aws sts get-caller-identity
-```
-
-## Environment Variables
-
-Configure the following environment variables as needed:
-
-```bash
-# AWS configuration
-export AWS_REGION=us-east-2
+make tunnel-stop
 ```
 
 ## kubectl
@@ -238,15 +191,30 @@ kubectl get nodes
 make tunnel-stop
 ```
 
-## Getting Started
+### Running Playwright Tests
 
-1. **Install all requirements** using the Installation & Setup section above
-2. **Authenticate to AWS** using Granted or Assume
-3. **Verify credentials** with `aws sts get-caller-identity`
-4. **Initialize Terraform** with `make bootstrap-init`
-5. **Review infrastructure plan** with `make bootstrap-plan`
-6. **Apply infrastructure** with `make bootstrap-apply`
-7. **Run tests** with `npm test`
+```bash
+# Install dependencies
+npm install
+
+# Run Playwright tests
+npm test
+
+# Run tests with UI mode
+npm run test:ui
+
+# View test report
+npm run test:report
+```
+
+## Environment Variables
+
+Configure the following environment variables as needed:
+
+```bash
+# AWS configuration
+export AWS_REGION=us-east-2
+```
 
 ## Makefile Targets
 
