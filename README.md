@@ -157,14 +157,14 @@ make docker-push
 # Start the instance
 make live-apply
 
+# Configure kubectl
+make get-kubeconfig
+
 # Open an SSM tunnel to the instance
 make tunnel-start
 
-# Configure kubectl
-./scripts/get-kubeconfig.sh
-
 # Start infrastructure
-./scripts/bootstrap-k3s.sh
+make k3s-bootstrap
 ```
 
 ### Spinning Down the Lab
