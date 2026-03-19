@@ -5,6 +5,7 @@ AWS_ACCOUNT ?= $(shell aws sts get-caller-identity --query Account --output text
 AWS_REGION ?= us-east-1
 ECR_REPO_NAME ?= flynn/playwright-synthetics
 TERRAFORM_AUTO_APPROVE ?= false
+GIT_SHA := $(shell git rev-parse --short HEAD)
 
 # Derive ECR URI from account and region
 ECR_URL = $(AWS_ACCOUNT).dkr.ecr.$(AWS_REGION).amazonaws.com
@@ -50,11 +51,12 @@ docker-login:
 	aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(ECR_URL)
 
 docker-build:
-	@echo "Building Docker image: $(ECR_REPO):latest..."
-	docker build -t $(ECR_REPO):latest src/
+	@echo "Building Docker image: $(ECR_REPO):$(GIT_SHA)..."
+	docker build -t $(ECR_REPO):$(GIT_SHA) -t $(ECR_REPO):latest src/
 
 docker-push: docker-build docker-login
 	@echo "Pushing Docker image to ECR..."
+	docker push $(ECR_REPO):$(GIT_SHA)
 	docker push $(ECR_REPO):latest
 
 # Bootstrap Terraform targets
