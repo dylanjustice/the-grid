@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import client from "prom-client";
+import * as client from "prom-client";
 
 const register = new client.Registry();
 
