@@ -9,7 +9,9 @@ workflows:
           image: 393657359434.dkr.ecr.us-east-2.amazonaws.com/flynn/playwright-synthetics:ad9b349
           command: ["npx", "playwright", "test"]
           imagePullPolicy: Always
-          env: []
+          env:
+            - name: PUSHGATEWAY_URL
+              value: "http://playwright-synthetics-prometheus-pushgateway:9091"
           resources:
             requests:
               cpu: "250m"
@@ -21,3 +23,7 @@ serviceAccount:
   create: true
   name: "playwright-synthetics-sa"
   annotations: {}
+
+prometheus-pushgateway:
+  serviceMonitor:
+    enabled: true
