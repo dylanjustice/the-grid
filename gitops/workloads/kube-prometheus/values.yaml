@@ -1,7 +1,6 @@
-server:
-  extraScrapeConfigs: |
-    - job_name: pushgateway
-      honor_labels: true
-      static_configs:
-        - targets:
-            - playwright-synthetics-prometheus-pushgateway.the-grid-synthetics:9091
+extraScrapeConfigs: |
+  - job_name: pushgateway
+    honor_labels: true
+    static_configs:
+      - targets:
+          - playwright-synthetics-prometheus-pushgateway.the-grid-synthetics:9091
