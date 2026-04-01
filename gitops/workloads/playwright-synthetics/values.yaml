@@ -27,3 +27,6 @@ serviceAccount:
 prometheus-pushgateway:
   serviceMonitor:
     enabled: false
+  serviceAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9091"

@@ -1,5 +1,5 @@
 server:
-  extraScrapeConfigs:
+  extraScrapeConfigs: |
     - job_name: pushgateway
       honor_labels: true
       static_configs:
