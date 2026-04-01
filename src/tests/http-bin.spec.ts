@@ -38,7 +38,7 @@ test("HTTP Methods", async ({ page }) => {
   await deleteOp.locator("button", { hasText: "Try it out" }).click();
   await deleteOp.locator("button", { hasText: "Execute" }).click();
   await expect(
-    deleteOp.locator("td.response-col_status:not(.col_header)"),
+    deleteOp.locator("td.response-col_status:not(.col_header)").first(),
   ).toHaveText("200");
   deleteTimer();
 
@@ -48,7 +48,7 @@ test("HTTP Methods", async ({ page }) => {
   await getOp.locator("button", { hasText: "Try it out" }).click();
   await getOp.locator("button", { hasText: "Execute" }).click();
   await expect(
-    getOp.locator("td.response-col_status:not(.col_header)"),
+    getOp.locator("td.response-col_status:not(.col_header)").first(),
   ).toHaveText("200");
   getTimer();
 
@@ -58,7 +58,7 @@ test("HTTP Methods", async ({ page }) => {
   await patchOp.locator("button", { hasText: "Try it out" }).click();
   await patchOp.locator("button", { hasText: "Execute" }).click();
   await expect(
-    patchOp.locator("td.response-col_status:not(.col_header)"),
+    patchOp.locator("td.response-col_status:not(.col_header)").first(),
   ).toHaveText("200");
   patchTimer();
 
@@ -68,7 +68,7 @@ test("HTTP Methods", async ({ page }) => {
   await postOp.locator("button", { hasText: "Try it out" }).click();
   await postOp.locator("button", { hasText: "Execute" }).click();
   await expect(
-    postOp.locator("td.response-col_status:not(.col_header)"),
+    postOp.locator("td.response-col_status:not(.col_header)").first(),
   ).toHaveText("200");
   postTimer();
 
@@ -78,7 +78,7 @@ test("HTTP Methods", async ({ page }) => {
   await putOp.locator("button", { hasText: "Try it out" }).click();
   await putOp.locator("button", { hasText: "Execute" }).click();
   await expect(
-    putOp.locator("td.response-col_status:not(.col_header)"),
+    putOp.locator("td.response-col_status:not(.col_header)").first(),
   ).toHaveText("200");
   putTimer();
 
