@@ -6,7 +6,7 @@ workflows:
     templates:
       - name: "run"
         container:
-          image: 393657359434.dkr.ecr.us-east-2.amazonaws.com/flynn/playwright-synthetics:a635262
+          image: 393657359434.dkr.ecr.us-east-2.amazonaws.com/flynn/playwright-synthetics:7cf8800
           command: ["npx", "playwright", "test"]
           imagePullPolicy: Always
           env:
