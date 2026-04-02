@@ -1,0 +1,28 @@
+argo-workflows:
+  enabled: true
+
+# Bring your own scrape target
+pushgateway:
+  enabled: true
+  # or point at an existing one:
+  # externalUrl: http://my-pushgateway:9091
+
+# Runtime image (browsers + node_modules, no test files)
+runner:
+  image: ghcr.io/the-grid/runner:latest
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+
+# Artifact storage
+artifacts:
+  enabled: true
+  bucket: my-artifacts-bucket
+  region: us-east-1
+
+# UI
+ui:
+  enabled: true
+  auth:
+    mode: none # none | oidc (none ships first with a warning)
