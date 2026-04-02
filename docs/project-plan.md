@@ -67,6 +67,17 @@ test("homepage loads", async ({ page }) => {
 
 **Goal:** Tests are first-class Kubernetes objects. Adding a synthetic means applying a CR, not editing Helm values.
 
+The operator reconciles `SyntheticTest` → Argo `CronWorkflow` + supporting config.
+Delete the CR, the CronWorkflow is cleaned up. Update the schedule, operator patches it.
+
+#### Test source model
+
+The runtime image contains the Playwright runtime (browsers, node_modules) but no test files.
+Test source is injected at pod startup via one of two strategies, chosen per CR:
+
+**Inline** — test source embedded directly in the CR, stored as a `ConfigMap` and mounted at `/app/tests/`.
+Best for quick iteration and getting started.
+
 ```yaml
 apiVersion: grid.theone.io/v1alpha1
 kind: SyntheticTest
@@ -74,22 +85,50 @@ metadata:
   name: httpbin-http-methods
 spec:
   schedule: "*/5 * * * *"
-  image: 393657359434.dkr.ecr.us-east-2.amazonaws.com/flynn/playwright-synthetics:latest
-  testFilter: "http-bin"
-  pushgatewayUrl: http://playwright-synthetics-prometheus-pushgateway:9091
-  artifactsBucket: the-grid-artifacts
+  source:
+    inline: |
+      import { test, expect } from '../lib/synthetics'
+
+      test('GET returns 200', async ({ page }) => {
+        await test.step('navigate', () => page.goto('https://httpbin.org'))
+        await expect(page).toHaveTitle(/httpbin/)
+      })
   resources:
     requests:
       cpu: 250m
       memory: 512Mi
 ```
 
-The operator reconciles `SyntheticTest` → Argo `CronWorkflow` + supporting config.
-Delete the CR, the CronWorkflow is cleaned up. Update the schedule, operator patches it.
+**S3** — versioned test bundle uploaded via CI (`make publish-tests`), downloaded by an init container at pod startup.
+Best for test suites that have graduated to a real publish pipeline.
+
+```yaml
+apiVersion: grid.theone.io/v1alpha1
+kind: SyntheticTest
+metadata:
+  name: httpbin-http-methods
+spec:
+  schedule: "*/5 * * * *"
+  source:
+    s3:
+      bucket: the-grid-artifacts
+      key: test-suites/httpbin/v1.4.2/tests.tar.gz
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+```
+
+#### Local development
+
+No change to the local workflow — `make test` runs `npx playwright test` from `src/` directly.
+The image rebuild + push cycle is only needed when runtime deps (browsers, node_modules) change, not when tests change.
+
+#### Implementation
 
 - Scaffold with kubebuilder (Go + controller-runtime)
-- `SyntheticTest` controller: reconcile → create/update/delete `CronWorkflow`
-- Optionally add `SyntheticTestRun` to mirror completed workflow runs (gives UI a structured API)
+- `SyntheticTest` controller: reconcile → `ConfigMap` (inline) or init container (S3) + `CronWorkflow`
+- Optionally add `SyntheticTestRun` to mirror completed workflow runs (gives the UI a structured API)
 - Deploy operator via ArgoCD
 
 **Why fourth:** Transforms the platform from "a test runner" into "a platform with an API." Also the prerequisite for a useful custom UI.
