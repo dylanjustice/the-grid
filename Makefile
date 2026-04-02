@@ -149,6 +149,8 @@ k3s-bootstrap:
 
 # Playwright targets
 test:
+	cd src && npx playwright test
+test-ui:
 	cd src && npx playwright test --ui
 
 # Convenience targets
