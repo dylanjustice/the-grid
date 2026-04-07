@@ -39,6 +39,12 @@ help:
 	@echo "  k3s-start             - Recreate the k3s instance"
 	@echo "  k3s-bootstrap         - Bootstrap k3s cluster with necessary tools and configurations"
 	@echo "  test                  - Run Playwright tests with UI mode"
+	@echo "  operator-generate     - Generate CRD manifests and DeepCopy methods"
+	@echo "  operator-build        - Build the operator binary"
+	@echo "  operator-test         - Run operator unit tests"
+	@echo "  operator-docker-build - Build operator container image"
+	@echo "  operator-docker-push  - Push operator container image"
+	@echo "  operator-deploy       - Deploy operator to cluster"
 	@echo ""
 	@echo "Variables:"
 	@echo "  AWS_ACCOUNT (default: auto-detected)"
@@ -152,6 +158,25 @@ test:
 	cd playwright-synthetics && npx playwright test
 test-ui:
 	cd playwright-synthetics && npx playwright test --ui
+
+# Operator targets
+operator-generate:
+	$(MAKE) -C synthetics-operator manifests generate
+
+operator-build:
+	$(MAKE) -C synthetics-operator build
+
+operator-test:
+	$(MAKE) -C synthetics-operator test
+
+operator-docker-build:
+	$(MAKE) -C synthetics-operator docker-build IMG=$(ECR_URL)/flynn/synthetics-operator:$(GIT_SHA)
+
+operator-docker-push:
+	$(MAKE) -C synthetics-operator docker-push IMG=$(ECR_URL)/flynn/synthetics-operator:$(GIT_SHA)
+
+operator-deploy:
+	$(MAKE) -C synthetics-operator deploy
 
 # Convenience targets
 all-init: bootstrap-init live-init
