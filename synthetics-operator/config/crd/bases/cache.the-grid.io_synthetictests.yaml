@@ -1,0 +1,54 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.18.0
+  name: synthetictests.cache.the-grid.io
+spec:
+  group: cache.the-grid.io
+  names:
+    kind: SyntheticTest
+    listKind: SyntheticTestList
+    plural: synthetictests
+    singular: synthetictest
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: SyntheticTest is the Schema for the synthetictests API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: SyntheticTestSpec defines the desired state of SyntheticTest.
+            properties:
+              foo:
+                description: Foo is an example field of SyntheticTest. Edit synthetictest_types.go
+                  to remove/update
+                type: string
+            type: object
+          status:
+            description: SyntheticTestStatus defines the observed state of SyntheticTest.
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
