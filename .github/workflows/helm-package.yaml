@@ -1,5 +1,4 @@
 name: Package and Publish Helm Charts
-
 on:
   push:
     branches:
@@ -8,49 +7,39 @@ on:
       - "gitops/workloads/**"
     tags:
       - "chart/**/v*"
-
 env:
   REGISTRY: ghcr.io
   REGISTRY_BASE: ghcr.io/${{ github.repository_owner }}/charts
-
 jobs:
   package-and-push:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-
     strategy:
       matrix:
         chart:
           - path: gitops/workloads/playwright-synthetics
             name: the-grid-synthetics
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Helm
         uses: azure/setup-helm@v4
-
       - name: Log in to GHCR
         run: |
           helm registry login ${{ env.REGISTRY }} \
             --username ${{ github.actor }} \
             --password ${{ secrets.GITHUB_TOKEN }}
-
       - name: Resolve chart version
         id: version
         run: |
           VERSION=$(helm show chart ${{ matrix.chart.path }} | grep '^version:' | awk '{print $2}')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-
       - name: Update chart dependencies
         run: helm dependency update ${{ matrix.chart.path }}
-
       - name: Package chart
         run: helm package ${{ matrix.chart.path }} --destination ./dist
-
       - name: Push chart to GHCR
         run: |
           helm push ./dist/${{ matrix.chart.name }}-${{ steps.version.outputs.version }}.tgz \
