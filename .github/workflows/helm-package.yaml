@@ -4,7 +4,7 @@ on:
     branches:
       - main
     paths:
-      - "gitops/workloads/**"
+      - "charts/**"
     tags:
       - "chart/**/v*"
 env:
@@ -19,7 +19,7 @@ jobs:
     strategy:
       matrix:
         chart:
-          - path: gitops/workloads/playwright-synthetics
+          - path: charts
             name: the-grid-synthetics
     steps:
       - name: Checkout
