@@ -1,0 +1,9 @@
+apiVersion: cache.the-grid.io/v1alpha1
+kind: SyntheticTest
+metadata:
+  labels:
+    app.kubernetes.io/name: synthetics-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: synthetictest-sample
+spec:
+  # TODO(user): Add fields here
