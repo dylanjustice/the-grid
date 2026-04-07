@@ -3,6 +3,7 @@
 # It should be run by config/default
 resources:
 - bases/cache.the-grid.io_synthetictests.yaml
+- bases/cache.the-grid.io_synthetictestruns.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patches:
