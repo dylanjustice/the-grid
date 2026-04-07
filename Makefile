@@ -53,7 +53,7 @@ docker-login:
 
 docker-build:
 	@echo "Building Docker image: $(ECR_REPO):$(GIT_SHA)..."
-	docker build -t $(ECR_REPO):$(GIT_SHA) -t $(ECR_REPO):latest src/
+	docker build -t $(ECR_REPO):$(GIT_SHA) -t $(ECR_REPO):latest playwright-synthetics/
 
 docker-push: docker-build docker-login
 	@echo "Pushing Docker image to ECR..."
@@ -149,9 +149,9 @@ k3s-bootstrap:
 
 # Playwright targets
 test:
-	cd src && npx playwright test
+	cd playwright-synthetics && npx playwright test
 test-ui:
-	cd src && npx playwright test --ui
+	cd playwright-synthetics && npx playwright test --ui
 
 # Convenience targets
 all-init: bootstrap-init live-init

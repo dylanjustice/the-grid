@@ -17,7 +17,7 @@ All common operations go through `make`. Run `make help` for the full list.
 make test        # headless
 make test-ui     # interactive Playwright UI
 ```
-Tests live in `src/tests/`. Playwright config is `src/playwright.config.ts`. Node 23 is required (`nvm use 23`).
+Tests live in `playwright-synthetics/tests/`. Playwright config is `playwright-synthetics/playwright.config.ts`. Node 23 is required (`nvm use 23`).
 
 **Docker:**
 ```bash
@@ -66,11 +66,11 @@ All three applications auto-sync with prune + selfHeal. Pushing to `main` trigge
 
 ### Container image
 
-Built from `src/Dockerfile` (multi-stage). The runtime stage contains browsers and node_modules but test files are copied in at build time today. The plan is to decouple these so the runner image is stable and tests are injected via ConfigMap (inline) or S3 (published bundle) at pod startup — see `docs/project-plan.md` milestone 2.
+Built from `playwright-synthetics/Dockerfile` (multi-stage). The runtime stage contains browsers and node_modules but test files are copied in at build time today. The plan is to decouple these so the runner image is stable and tests are injected via ConfigMap (inline) or S3 (published bundle) at pod startup — see `docs/project-plan.md` milestone 2.
 
 ### Metrics instrumentation
 
-`prom-client` is used directly in `src/tests/http-bin.spec.ts`. A shared library (`@the-grid/synthetics`) that wraps Playwright's `test` fixture and handles instrumentation automatically is a planned milestone. When building new tests, follow the existing pattern until that library exists.
+`prom-client` is used directly in `playwright-synthetics/tests/http-bin.spec.ts`. A shared library (`@the-grid/synthetics`) that wraps Playwright's `test` fixture and handles instrumentation automatically is a planned milestone. When building new tests, follow the existing pattern until that library exists.
 
 ### Planned: Kubernetes Operator
 
