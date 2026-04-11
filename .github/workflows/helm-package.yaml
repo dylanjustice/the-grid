@@ -19,7 +19,7 @@ jobs:
     strategy:
       matrix:
         chart:
-          - path: charts
+          - path: charts/the-grid-synthetics
             name: the-grid-synthetics
     steps:
       - name: Checkout
