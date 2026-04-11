@@ -36,6 +36,8 @@ jobs:
         run: |
           VERSION=$(helm show chart ${{ matrix.chart.path }} | grep '^version:' | awk '{print $2}')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+      - name: pwd
+        run: pwd
       - name: Update chart dependencies
         run: helm dependency update ${{ matrix.chart.path }}
       - name: Package chart
