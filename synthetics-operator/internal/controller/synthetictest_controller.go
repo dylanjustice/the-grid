@@ -19,11 +19,14 @@ package controller
 import (
 	"context"
 
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
+	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	cachev1alpha1 "github.com/dylanjustice/the-grid/synthetics-operator/api/v1alpha1"
 )
 
@@ -49,7 +52,66 @@ type SyntheticTestReconciler struct {
 func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = logf.FromContext(ctx)
 
-	// TODO(user): your logic here
+	syntheticTest := &cachev1alpha1.SyntheticTest{}
+	if err := r.Get(ctx, req.NamespacedName, syntheticTest); err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	configMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      syntheticTest.Name + "-config",
+			Namespace: syntheticTest.Namespace,
+		},
+		Data: map[string]string{
+			"schedule": syntheticTest.Spec.Schedule,
+			"source":   syntheticTest.Spec.Source.Inline,
+		},
+	}
+
+	err := r.Create(ctx, configMap)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	container := syntheticTest.Spec.Container
+	if container.Image == "" {
+		container.Image = "ghcr.io/the-grid/runner:latest"
+	}
+	if len(container.Command) == 0 {
+		container.Command = []string{"npx", "playwright", "test"}
+	}
+	if container.Name == "" {
+		container.Name = "playwright"
+	}
+
+	template := wfv1.Template{
+		Name:      "run",
+		Container: &syntheticTest.Spec.Container,
+	}
+
+	workflow := &wfv1.CronWorkflow{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      syntheticTest.Name,
+			Namespace: syntheticTest.Namespace,
+		},
+		Spec: wfv1.CronWorkflowSpec{
+			Schedules: []string{
+				syntheticTest.Spec.Schedule,
+			},
+			WorkflowSpec: wfv1.WorkflowSpec{
+				ServiceAccountName: *syntheticTest.Spec.ServiceAccountName,
+				Entrypoint:         syntheticTest.Spec.Entrypoint,
+				Templates: []wfv1.Template{
+					template,
+				},
+			},
+		},
+	}
+
+	err = r.Create(ctx, workflow)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
 	return ctrl.Result{}, nil
 }

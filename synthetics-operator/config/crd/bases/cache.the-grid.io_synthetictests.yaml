@@ -37,12 +37,14 @@ spec:
           metadata:
             type: object
           spec:
-            description: SyntheticTestSpec defines the desired state of SyntheticTest.
             properties:
-              foo:
-                description: Foo is an example field of SyntheticTest. Edit synthetictest_types.go
-                  to remove/update
+              schedule:
                 type: string
+              source:
+                properties:
+                  inline:
+                    type: string
+                type: object
             type: object
           status:
             description: SyntheticTestStatus defines the observed state of SyntheticTest.
