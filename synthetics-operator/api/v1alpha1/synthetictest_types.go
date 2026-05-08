@@ -29,8 +29,8 @@ type SyntheticTestSpec struct {
 	Schedule           string              `json:"schedule,omitempty"`
 	Source             SyntheticTestSource `json:"source,omitempty"`
 	ServiceAccountName *string             `json:"serviceAccountName,omitempty"`
-	Entrypoint         string              `json:entrypoint,omitempty"`
-	Container          v1.Container        `json:container,omitempty"`
+	Entrypoint         string              `json:"entrypoint,omitempty"`
+	Container          v1.Container        `json:"container,omitempty"`
 }
 
 // SyntheticTestStatus defines the observed state of SyntheticTest.
