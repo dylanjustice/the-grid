@@ -4,6 +4,7 @@
 AWS_ACCOUNT ?= $(shell aws sts get-caller-identity --query Account --output text)
 AWS_REGION ?= us-east-1
 ECR_REPO_NAME ?= flynn/playwright-synthetics
+RUNNER_ECR_REPO_NAME ?= flynn/runner
 TERRAFORM_AUTO_APPROVE ?= false
 GIT_SHA := $(shell git rev-parse --short HEAD)
 
@@ -57,14 +58,23 @@ docker-login:
 	@echo "Logging in to ECR at $(ECR_URL)..."
 	aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(ECR_URL)
 
-docker-build:
+docker-build-tests:
 	@echo "Building Docker image: $(ECR_REPO):$(GIT_SHA)..."
 	docker build -t $(ECR_REPO):$(GIT_SHA) -t $(ECR_REPO):latest playwright-synthetics/
 
-docker-push: docker-build docker-login
+docker-push-tests: docker-build docker-login
 	@echo "Pushing Docker image to ECR..."
 	docker push $(ECR_REPO):$(GIT_SHA)
 	docker push $(ECR_REPO):latest
+
+docker-build-runner:
+	@echo "Building Docker image: $(ECR_REPO):$(GIT_SHA)..."
+	docker build -t $(RUNNER_ECR_REPO):$(GIT_SHA) -t $(RUNNER_ECR_REPO):latest playwright-synthetics/
+
+docker-push-runner: docker-build docker-login
+	@echo "Pushing Docker image to ECR..."
+	docker push $(RUNNER_ECR_REPO):$(GIT_SHA)
+	docker push $(RUNNER_ECR_REPO):latest
 
 # Bootstrap Terraform targets
 bootstrap-init:

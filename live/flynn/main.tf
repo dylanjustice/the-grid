@@ -8,7 +8,7 @@ locals {
   subnet_newbits  = var.subnet_prefix - var.vpc_cidr_prefix
   private_subnets = [for i in range(local.az_count) : cidrsubnet(var.vpc_cidr, local.subnet_newbits, i)]
   public_subnets  = [for i in range(local.az_count) : cidrsubnet(var.vpc_cidr, local.subnet_newbits, i + local.az_count)]
-  repositories    = toset(["flynn/playwright-synthetics", "flynn/synthetics-operator"])
+  repositories    = toset(["flynn/playwright-synthetics", "flynn/synthetics-operator", "flynn/playwright-runner-js"])
 }
 module "alpha_vpc" {
   source             = "terraform-aws-modules/vpc/aws"
