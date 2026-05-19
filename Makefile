@@ -4,13 +4,14 @@
 AWS_ACCOUNT ?= $(shell aws sts get-caller-identity --query Account --output text)
 AWS_REGION ?= us-east-1
 ECR_REPO_NAME ?= flynn/playwright-synthetics
-RUNNER_ECR_REPO_NAME ?= flynn/runner
+RUNNER_ECR_REPO_NAME ?= flynn/playwright-runner-js
 TERRAFORM_AUTO_APPROVE ?= false
 GIT_SHA := $(shell git rev-parse --short HEAD)
 
 # Derive ECR URI from account and region
 ECR_URL = $(AWS_ACCOUNT).dkr.ecr.$(AWS_REGION).amazonaws.com
 ECR_REPO = $(ECR_URL)/$(ECR_REPO_NAME)
+RUNNER_ECR_REPO = $(ECR_URL)/$(RUNNER_ECR_REPO_NAME)
 
 # k3s instance connection
 INSTANCE_ID := $(shell terraform -chdir=live/flynn output -raw k3s_instance_id)
@@ -19,8 +20,10 @@ AWS_REGION := us-east-2
 help:
 	@echo "Available targets:"
 	@echo "  docker-login          - Login to AWS ECR"
-	@echo "  docker-build          - Build Docker image from src/"
-	@echo "  docker-push           - Push Docker image to ECR"
+	@echo "  docker-build-tests    - Build Docker image from src/"
+	@echo "  docker-push-tests     - Push Docker image to ECR"
+	@echo "  docker-build-runner"  - Build JS docker runner
+	@echo "  docker-push-runner"   - Push JS docker runner
 	@echo "  bootstrap-init        - Terraform init in bootstrap/"
 	@echo "  bootstrap-plan        - Terraform plan in bootstrap/"
 	@echo "  bootstrap-apply       - Terraform apply in bootstrap/"
@@ -68,8 +71,8 @@ docker-push-tests: docker-build docker-login
 	docker push $(ECR_REPO):latest
 
 docker-build-runner:
-	@echo "Building Docker image: $(ECR_REPO):$(GIT_SHA)..."
-	docker build -t $(RUNNER_ECR_REPO):$(GIT_SHA) -t $(RUNNER_ECR_REPO):latest playwright-synthetics/
+	@echo "Building Docker image: $(RUNNER_ECR_REPO):$(GIT_SHA)..."
+	docker build -t $(RUNNER_ECR_REPO):$(GIT_SHA) -t $(RUNNER_ECR_REPO):latest runner/
 
 docker-push-runner: docker-build docker-login
 	@echo "Pushing Docker image to ECR..."

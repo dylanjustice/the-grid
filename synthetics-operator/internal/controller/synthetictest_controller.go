@@ -57,9 +57,10 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	configMapName := syntheticTest.Name + "-config"
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      syntheticTest.Name + "-config",
+			Name:      configMapName,
 			Namespace: syntheticTest.Namespace,
 		},
 		Data: map[string]string{
@@ -75,7 +76,8 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	container := syntheticTest.Spec.Container
 	if container.Image == "" {
-		container.Image = "ghcr.io/the-grid/runner:latest"
+		// container.Image = "ghcr.io/the-grid/runner:latest"
+		container.Image = "393657359434.dkr.ecr.us-east-2.amazonaws.com/flynn/playwright-runner-js:latest"
 	}
 	if len(container.Command) == 0 {
 		container.Command = []string{"npx", "playwright", "test"}
@@ -103,6 +105,18 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 				Entrypoint:         syntheticTest.Spec.Entrypoint,
 				Templates: []wfv1.Template{
 					template,
+				},
+				Volumes: []corev1.Volume{
+					{
+						Name: syntheticTest.Name + "-source",
+						VolumeSource: corev1.VolumeSource{
+							ConfigMap: &corev1.ConfigMapVolumeSource{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: configMapName,
+								},
+							},
+						},
+					},
 				},
 			},
 		},
