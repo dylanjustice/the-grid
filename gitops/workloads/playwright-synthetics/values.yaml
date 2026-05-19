@@ -1,24 +1,24 @@
-workflows:
-  - name: "Playwright Synthetics Workflow"
-    description: "A workflow to run Playwright synthetics tests."
-    schedule: "*/5 * * * *" # Run daily at midnight
-    entrypoint: "run"
-    templates:
-      - name: "run"
-        container:
-          image: 393657359434.dkr.ecr.us-east-2.amazonaws.com/flynn/playwright-synthetics:7cf8800
-          command: ["npx", "playwright", "test"]
-          imagePullPolicy: Always
-          env:
-            - name: PUSHGATEWAY_URL
-              value: "http://playwright-synthetics-prometheus-pushgateway:9091"
-          resources:
-            requests:
-              cpu: "250m"
-              memory: "512Mi"
-            limits:
-              cpu: "1"
-              memory: "1Gi"
+workflows: []
+  # - name: "Playwright Synthetics Workflow"
+  #   description: "A workflow to run Playwright synthetics tests."
+  #   schedule: "*/5 * * * *" # Run daily at midnight
+  #   entrypoint: "run"
+  #   templates:
+  #     - name: "run"
+  #       container:
+  #         image: 393657359434.dkr.ecr.us-east-2.amazonaws.com/flynn/playwright-synthetics:7cf8800
+  #         command: ["npx", "playwright", "test"]
+  #         imagePullPolicy: Always
+  #         env:
+  #           - name: PUSHGATEWAY_URL
+  #             value: "http://playwright-synthetics-prometheus-pushgateway:9091"
+  #         resources:
+  #           requests:
+  #             cpu: "250m"
+  #             memory: "512Mi"
+  #           limits:
+  #             cpu: "1"
+  #             memory: "1Gi"
 serviceAccount:
   create: true
   name: "playwright-synthetics-sa"
