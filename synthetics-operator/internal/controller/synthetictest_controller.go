@@ -20,6 +20,7 @@ import (
 	"context"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -39,6 +40,8 @@ type SyntheticTestReconciler struct {
 // +kubebuilder:rbac:groups=cache.the-grid.io,resources=synthetictests,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=cache.the-grid.io,resources=synthetictests/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=cache.the-grid.io,resources=synthetictests/finalizers,verbs=update
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=argoproj.io,resources=cronworkflows,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -64,19 +67,16 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			Namespace: syntheticTest.Namespace,
 		},
 		Data: map[string]string{
-			"schedule": syntheticTest.Spec.Schedule,
-			"source":   syntheticTest.Spec.Source.Inline,
+			"test.spec.ts": syntheticTest.Spec.Source.Inline,
 		},
 	}
 
-	err := r.Create(ctx, configMap)
-	if err != nil {
+	if err := r.Create(ctx, configMap); err != nil && !errors.IsAlreadyExists(err) {
 		return ctrl.Result{}, err
 	}
 
 	container := syntheticTest.Spec.Container
 	if container.Image == "" {
-		// container.Image = "ghcr.io/the-grid/runner:latest"
 		container.Image = "393657359434.dkr.ecr.us-east-2.amazonaws.com/flynn/playwright-runner-js:latest"
 	}
 	if len(container.Command) == 0 {
@@ -85,10 +85,14 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if container.Name == "" {
 		container.Name = "playwright"
 	}
+	container.VolumeMounts = append(container.VolumeMounts, corev1.VolumeMount{
+		Name:      syntheticTest.Name + "-source",
+		MountPath: "/app/tests",
+	})
 
 	template := wfv1.Template{
 		Name:      "run",
-		Container: &syntheticTest.Spec.Container,
+		Container: &container,
 	}
 
 	workflow := &wfv1.CronWorkflow{
@@ -122,8 +126,7 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		},
 	}
 
-	err = r.Create(ctx, workflow)
-	if err != nil {
+	if err := r.Create(ctx, workflow); err != nil && !errors.IsAlreadyExists(err) {
 		return ctrl.Result{}, err
 	}
 

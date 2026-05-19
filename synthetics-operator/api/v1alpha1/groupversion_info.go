@@ -26,7 +26,7 @@ import (
 
 var (
 	// GroupVersion is group version used to register these objects.
-	GroupVersion = schema.GroupVersion{Group: "cache.the-grid.io", Version: "v1alpha1"}
+	GroupVersion = schema.GroupVersion{Group: "cache.the-grid.io", Version: "v1alpha1"} // #TODO: Pick a good group name
 
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme.
 	SchemeBuilder = &scheme.Builder{GroupVersion: GroupVersion}

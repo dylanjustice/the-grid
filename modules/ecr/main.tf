@@ -6,7 +6,7 @@ variable "repository_name" {
 resource "aws_ecr_repository" "flynn" {
   name                 = var.repository_name
   force_delete         = true
-  image_tag_mutability = "IMMUTABLE"
+  image_tag_mutability = "MUTABLE"
   image_scanning_configuration {
     scan_on_push = false
   }
