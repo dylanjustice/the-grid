@@ -20,6 +20,8 @@ import (
 	"context"
 
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -41,7 +43,11 @@ type SyntheticTestReconciler struct {
 // +kubebuilder:rbac:groups=cache.the-grid.io,resources=synthetictests/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=cache.the-grid.io,resources=synthetictests/finalizers,verbs=update
 // +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=rolebindings,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=argoproj.io,resources=cronworkflows,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=argoproj.io,resources=workflowtaskresults,verbs=create;patch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -72,6 +78,58 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	if err := r.Create(ctx, configMap); err != nil && !errors.IsAlreadyExists(err) {
+		return ctrl.Result{}, err
+	}
+
+	serviceAccount := &v1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      *syntheticTest.Spec.ServiceAccountName,
+			Namespace: syntheticTest.Namespace,
+		},
+	}
+
+	if err := r.Create(ctx, serviceAccount); err != nil && !errors.IsAlreadyExists(err) {
+		return ctrl.Result{}, err
+	}
+
+	role := &rbacv1.Role{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      syntheticTest.Name,
+			Namespace: syntheticTest.Namespace,
+		},
+		Rules: []rbacv1.PolicyRule{
+			{
+				APIGroups: []string{"argoproj.io"},
+				Resources: []string{"workflowtaskresults"},
+				Verbs:     []string{"create", "patch"},
+			},
+		},
+	}
+
+	if err := r.Create(ctx, role); err != nil && !errors.IsAlreadyExists(err) {
+		return ctrl.Result{}, err
+	}
+
+	rb := &rbacv1.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      syntheticTest.Name,
+			Namespace: syntheticTest.Namespace,
+		},
+		RoleRef: rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "Role",
+			Name:     syntheticTest.Name,
+		},
+		Subjects: []rbacv1.Subject{
+			{
+				Kind:      "ServiceAccount",
+				Name:      *syntheticTest.Spec.ServiceAccountName,
+				Namespace: syntheticTest.Namespace,
+			},
+		},
+	}
+
+	if err := r.Create(ctx, rb); err != nil && !errors.IsAlreadyExists(err) {
 		return ctrl.Result{}, err
 	}
 
