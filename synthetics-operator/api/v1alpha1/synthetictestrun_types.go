@@ -20,22 +20,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
-// SyntheticTestRunSpec defines the desired state of SyntheticTestRun.
 type SyntheticTestRunSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of SyntheticTestRun. Edit synthetictestrun_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	Name         string       `json:"name"`
+	WorkflowName string       `json:"workflowName"`
+	StartedAt    *metav1.Time `json:"startedAt,omitempty"`
 }
 
-// SyntheticTestRunStatus defines the observed state of SyntheticTestRun.
 type SyntheticTestRunStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	Phase      string       `json:"phase"` // Succeeded, Failed, Running
+	FinishedAt *metav1.Time `json:"finishedAt,omitempty"`
+	Message    string       `json:"message,omitempty"`
 }
 
 // +kubebuilder:object:root=true

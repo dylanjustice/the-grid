@@ -1,4 +1,4 @@
-apiVersion: cache.the-grid.io/v1alpha1
+apiVersion: thegrid.io/v1alpha1
 kind: SyntheticTestRun
 metadata:
   labels:

@@ -2,8 +2,8 @@
 # since it depends on service name and namespace that are out of this kustomize package.
 # It should be run by config/default
 resources:
-- bases/cache.the-grid.io_synthetictests.yaml
-- bases/cache.the-grid.io_synthetictestruns.yaml
+  - bases/thegrid.io_synthetictests.yaml
+  - bases/thegrid.io_synthetictestruns.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patches:

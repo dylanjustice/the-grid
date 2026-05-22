@@ -27,7 +27,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	cachev1alpha1 "github.com/dylanjustice/the-grid/synthetics-operator/api/v1alpha1"
+	gridv1alpha1 "github.com/dylanjustice/the-grid/synthetics-operator/api/v1alpha1"
 )
 
 var _ = Describe("SyntheticTestRun Controller", func() {
@@ -40,13 +40,13 @@ var _ = Describe("SyntheticTestRun Controller", func() {
 			Name:      resourceName,
 			Namespace: "default", // TODO(user):Modify as needed
 		}
-		synthetictestrun := &cachev1alpha1.SyntheticTestRun{}
+		synthetictestrun := &gridv1alpha1.SyntheticTestRun{}
 
 		BeforeEach(func() {
 			By("creating the custom resource for the Kind SyntheticTestRun")
 			err := k8sClient.Get(ctx, typeNamespacedName, synthetictestrun)
 			if err != nil && errors.IsNotFound(err) {
-				resource := &cachev1alpha1.SyntheticTestRun{
+				resource := &gridv1alpha1.SyntheticTestRun{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      resourceName,
 						Namespace: "default",
@@ -59,7 +59,7 @@ var _ = Describe("SyntheticTestRun Controller", func() {
 
 		AfterEach(func() {
 			// TODO(user): Cleanup logic after each test, like removing the resource instance.
-			resource := &cachev1alpha1.SyntheticTestRun{}
+			resource := &gridv1alpha1.SyntheticTestRun{}
 			err := k8sClient.Get(ctx, typeNamespacedName, resource)
 			Expect(err).NotTo(HaveOccurred())
 

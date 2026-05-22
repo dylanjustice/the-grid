@@ -37,35 +37,6 @@ rules:
   - create
   - patch
 - apiGroups:
-  - cache.the-grid.io
-  resources:
-  - synthetictestruns
-  - synthetictests
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cache.the-grid.io
-  resources:
-  - synthetictestruns/finalizers
-  - synthetictests/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cache.the-grid.io
-  resources:
-  - synthetictestruns/status
-  - synthetictests/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
   - rbac.authorization.k8s.io
   resources:
   - rolebindings
@@ -78,3 +49,29 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - thegrid.io
+  resources:
+  - synthetictests
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - thegrid.io
+  resources:
+  - synthetictests/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - thegrid.io
+  resources:
+  - synthetictests/status
+  verbs:
+  - get
+  - patch
+  - update

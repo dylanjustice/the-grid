@@ -19,12 +19,17 @@ package controller
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	cachev1alpha1 "github.com/dylanjustice/the-grid/synthetics-operator/api/v1alpha1"
+	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
+	gridv1alpha1 "github.com/dylanjustice/the-grid/synthetics-operator/api/v1alpha1"
 )
 
 // SyntheticTestRunReconciler reconciles a SyntheticTestRun object
@@ -33,31 +38,56 @@ type SyntheticTestRunReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=cache.the-grid.io,resources=synthetictestruns,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=cache.the-grid.io,resources=synthetictestruns/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=cache.the-grid.io,resources=synthetictestruns/finalizers,verbs=update
-
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the SyntheticTestRun object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.21.0/pkg/reconcile
+// +kubebuilder:rbac:groups=thegrid.io,resources=synthetictestruns,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=thegrid.io,resources=synthetictestruns/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=thegrid.io,resources=synthetictestruns/finalizers,verbs=update
+// +kubebuilder:rbac:groups=argoproj.io,resources=workflows,verbs=get;list;watch
 func (r *SyntheticTestRunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = logf.FromContext(ctx)
+	log := logf.FromContext(ctx)
 
-	// TODO(user): your logic here
+	workflow := &wfv1.Workflow{}
+	if err := r.Get(ctx, req.NamespacedName, workflow); err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
 
+	if !workflow.Status.Phase.Completed() {
+		return ctrl.Result{}, nil
+	}
+
+	testName := workflow.Labels["the-grid.io/synthetic-test"]
+
+	run := &gridv1alpha1.SyntheticTestRun{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      workflow.Name,
+			Namespace: workflow.Namespace,
+		},
+		Spec: gridv1alpha1.SyntheticTestRunSpec{
+			Name:         testName,
+			WorkflowName: workflow.Name,
+			StartedAt:    &workflow.Status.StartedAt,
+		},
+	}
+
+	if err := r.Create(ctx, run); err != nil && !errors.IsAlreadyExists(err) {
+		return ctrl.Result{}, err
+	}
+
+	log.Info("created SyntheticTestRun", "workflow", workflow.Name, "phase", workflow.Status.Phase)
 	return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *SyntheticTestRunReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&cachev1alpha1.SyntheticTestRun{}).
+		For(&wfv1.Workflow{}, builder.WithPredicates(
+			predicate.NewPredicateFuncs(
+				func(object client.Object) bool {
+					labels := object.GetLabels()
+					_, ok := labels["the-grid.io/synthetic-test"]
+					return ok
+				},
+			),
+		)).
 		Named("synthetictestrun").
 		Complete(r)
 }

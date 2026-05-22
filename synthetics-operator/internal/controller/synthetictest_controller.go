@@ -30,7 +30,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
-	cachev1alpha1 "github.com/dylanjustice/the-grid/synthetics-operator/api/v1alpha1"
+	gridv1alpha1 "github.com/dylanjustice/the-grid/synthetics-operator/api/v1alpha1"
 )
 
 // SyntheticTestReconciler reconciles a SyntheticTest object
@@ -39,9 +39,9 @@ type SyntheticTestReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=cache.the-grid.io,resources=synthetictests,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=cache.the-grid.io,resources=synthetictests/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=cache.the-grid.io,resources=synthetictests/finalizers,verbs=update
+// +kubebuilder:rbac:groups=thegrid.io,resources=synthetictests,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=thegrid.io,resources=synthetictests/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=thegrid.io,resources=synthetictests/finalizers,verbs=update
 // +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles,verbs=get;list;watch;create;update;patch;delete
@@ -49,19 +49,10 @@ type SyntheticTestReconciler struct {
 // +kubebuilder:rbac:groups=argoproj.io,resources=cronworkflows,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=argoproj.io,resources=workflowtaskresults,verbs=create;patch
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the SyntheticTest object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.21.0/pkg/reconcile
 func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = logf.FromContext(ctx)
 
-	syntheticTest := &cachev1alpha1.SyntheticTest{}
+	syntheticTest := &gridv1alpha1.SyntheticTest{}
 	if err := r.Get(ctx, req.NamespacedName, syntheticTest); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -157,6 +148,9 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      syntheticTest.Name,
 			Namespace: syntheticTest.Namespace,
+			Labels: map[string]string{
+				"the-grid.io/synthetic-test": syntheticTest.Name,
+			},
 		},
 		Spec: wfv1.CronWorkflowSpec{
 			Schedules: []string{
@@ -194,7 +188,7 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 // SetupWithManager sets up the controller with the Manager.
 func (r *SyntheticTestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&cachev1alpha1.SyntheticTest{}).
+		For(&gridv1alpha1.SyntheticTest{}).
 		Named("synthetictest").
 		Complete(r)
 }
