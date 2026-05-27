@@ -18,6 +18,8 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
+	"strconv"
 
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
@@ -68,6 +70,9 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		},
 	}
 
+	if err := ctrl.SetControllerReference(syntheticTest, configMap, r.Scheme); err != nil {
+		return ctrl.Result{}, err
+	}
 	if err := r.Create(ctx, configMap); err != nil && !errors.IsAlreadyExists(err) {
 		return ctrl.Result{}, err
 	}
@@ -79,6 +84,9 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		},
 	}
 
+	if err := ctrl.SetControllerReference(syntheticTest, serviceAccount, r.Scheme); err != nil {
+		return ctrl.Result{}, err
+	}
 	if err := r.Create(ctx, serviceAccount); err != nil && !errors.IsAlreadyExists(err) {
 		return ctrl.Result{}, err
 	}
@@ -97,6 +105,9 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		},
 	}
 
+	if err := ctrl.SetControllerReference(syntheticTest, role, r.Scheme); err != nil {
+		return ctrl.Result{}, err
+	}
 	if err := r.Create(ctx, role); err != nil && !errors.IsAlreadyExists(err) {
 		return ctrl.Result{}, err
 	}
@@ -120,6 +131,9 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		},
 	}
 
+	if err := ctrl.SetControllerReference(syntheticTest, rb, r.Scheme); err != nil {
+		return ctrl.Result{}, err
+	}
 	if err := r.Create(ctx, rb); err != nil && !errors.IsAlreadyExists(err) {
 		return ctrl.Result{}, err
 	}
@@ -142,6 +156,7 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	template := wfv1.Template{
 		Name:      "run",
 		Container: &container,
+		Metrics:   syntheticTestMetrics(),
 	}
 
 	workflow := &wfv1.CronWorkflow{
@@ -183,11 +198,53 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		},
 	}
 
+	if err := ctrl.SetControllerReference(syntheticTest, workflow, r.Scheme); err != nil {
+		return ctrl.Result{}, err
+	}
 	if err := r.Create(ctx, workflow); err != nil && !errors.IsAlreadyExists(err) {
 		return ctrl.Result{}, err
 	}
 
 	return ctrl.Result{}, nil
+}
+
+// syntheticTestMetrics returns the standard Prometheus metrics injected into
+// every CronWorkflow the operator generates. Two metrics are emitted after each
+// run, both labeled by test_name and status:
+//
+//   - synthetic_test_runs_total (counter)   — availability / error-rate SLO
+//   - synthetic_test_duration_seconds (histogram) — duration SLO
+func syntheticTestMetrics() *wfv1.Metrics {
+	durationBuckets := []float64{1, 5, 10, 30, 60, 120, 300}
+	amounts := make([]wfv1.Amount, len(durationBuckets))
+	for i, b := range durationBuckets {
+		amounts[i] = wfv1.Amount{Value: json.Number(strconv.FormatFloat(b, 'f', -1, 64))}
+	}
+
+	labels := []*wfv1.MetricLabel{
+		{Key: "test_name", Value: "{{workflow.labels['the-grid.io/synthetic-test']}}"},
+		{Key: "status", Value: "{{status}}"},
+	}
+
+	return &wfv1.Metrics{
+		Prometheus: []*wfv1.Prometheus{
+			{
+				Name:    "synthetic_test_runs_total",
+				Help:    "Total number of synthetic test runs",
+				Labels:  labels,
+				Counter: &wfv1.Counter{Value: "1"},
+			},
+			{
+				Name:   "synthetic_test_duration_seconds",
+				Help:   "Duration of synthetic test runs in seconds",
+				Labels: labels,
+				Histogram: &wfv1.Histogram{
+					Value:   "{{duration}}",
+					Buckets: amounts,
+				},
+			},
+		},
+	}
 }
 
 // SetupWithManager sets up the controller with the Manager.

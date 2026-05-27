@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -32,6 +33,7 @@ import (
 	gridv1alpha1 "github.com/dylanjustice/the-grid/synthetics-operator/api/v1alpha1"
 )
 
+// +kubebuilder:rbac:groups=thegrid.io,resources=synthetictests,verbs=get;list;watch
 // +kubebuilder:rbac:groups=thegrid.io,resources=synthetictestruns,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=thegrid.io,resources=synthetictestruns/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=thegrid.io,resources=synthetictestruns/finalizers,verbs=update
@@ -57,6 +59,12 @@ func (r *SyntheticTestRunReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	testName := workflow.Labels["the-grid.io/synthetic-test"]
 
+	syntheticTest := &gridv1alpha1.SyntheticTest{}
+	if err := r.Get(ctx, types.NamespacedName{Name: testName, Namespace: workflow.Namespace}, syntheticTest); err != nil {
+		// If the SyntheticTest is gone, nothing to own — skip silently
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
 	run := &gridv1alpha1.SyntheticTestRun{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      workflow.Name,
@@ -69,6 +77,9 @@ func (r *SyntheticTestRunReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		},
 	}
 
+	if err := ctrl.SetControllerReference(syntheticTest, run, r.Scheme); err != nil {
+		return ctrl.Result{}, err
+	}
 	if err := r.Create(ctx, run); err != nil && !errors.IsAlreadyExists(err) {
 		return ctrl.Result{}, err
 	}
