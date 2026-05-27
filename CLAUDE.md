@@ -75,3 +75,17 @@ Built from `playwright-synthetics/Dockerfile` (multi-stage). The runtime stage c
 ### Planned: Kubernetes Operator
 
 A kubebuilder-based operator (Go + controller-runtime) will manage `SyntheticTest` and `SyntheticTestRun` CRDs. The operator reconciles `SyntheticTest` → Argo `CronWorkflow`. This doesn't exist yet — current CronWorkflows are defined in `gitops/workloads/playwright-synthetics/templates/workflows.yaml` via Helm.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues (`dylanjustice/the-grid`). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Uses the five canonical default label strings. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context repo — one `CONTEXT.md` + `docs/adr/` at the root (neither exists yet). See `docs/agents/domain.md`.

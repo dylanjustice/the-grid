@@ -32,16 +32,17 @@ import (
 	gridv1alpha1 "github.com/dylanjustice/the-grid/synthetics-operator/api/v1alpha1"
 )
 
+// +kubebuilder:rbac:groups=thegrid.io,resources=synthetictestruns,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=thegrid.io,resources=synthetictestruns/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=thegrid.io,resources=synthetictestruns/finalizers,verbs=update
+// +kubebuilder:rbac:groups=argoproj.io,resources=workflows,verbs=get;list;watch
+
 // SyntheticTestRunReconciler reconciles a SyntheticTestRun object
 type SyntheticTestRunReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=thegrid.io,resources=synthetictestruns,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=thegrid.io,resources=synthetictestruns/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=thegrid.io,resources=synthetictestruns/finalizers,verbs=update
-// +kubebuilder:rbac:groups=argoproj.io,resources=workflows,verbs=get;list;watch
 func (r *SyntheticTestRunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)
 

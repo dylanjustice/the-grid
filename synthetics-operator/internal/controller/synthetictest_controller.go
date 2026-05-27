@@ -156,6 +156,11 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			Schedules: []string{
 				syntheticTest.Spec.Schedule,
 			},
+			WorkflowMetadata: &metav1.ObjectMeta{
+				Labels: map[string]string{
+					"the-grid.io/synthetic-test": syntheticTest.Name,
+				},
+			},
 			WorkflowSpec: wfv1.WorkflowSpec{
 				ServiceAccountName: *syntheticTest.Spec.ServiceAccountName,
 				Entrypoint:         syntheticTest.Spec.Entrypoint,
