@@ -1,18 +1,20 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: playwright-synthetics
+  name: prometheus-pushgateway
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   labels:
-    name: playwright-synthetics
+    name: prometheus-pushgateway
 spec:
   project: default
   source:
-    repoURL: https://github.com/dylanjustice/the-grid
-    targetRevision: HEAD
-    path: gitops/workloads/playwright-synthetics
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: prometheus-pushgateway
+    targetRevision: 2.16.0
+    helm:
+      releaseName: playwright-synthetics
   destination:
     name: in-cluster
     namespace: the-grid-synthetics
