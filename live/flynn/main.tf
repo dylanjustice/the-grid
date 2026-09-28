@@ -62,3 +62,74 @@ module "ecr" {
   source          = "../../modules/ecr"
   repository_name = each.key
 }
+
+
+resource "aws_s3_bucket" "artifacts" {
+  bucket = "${data.aws_caller_identity.current.account_id}-${var.region}-artifacts"
+}
+
+resource "aws_s3_bucket_public_access_block" "artifacts" {
+  bucket                  = aws_s3_bucket.artifacts.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_versioning" "artifacts" {
+  bucket = aws_s3_bucket.artifacts.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "artifacts" {
+  bucket = aws_s3_bucket.artifacts.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "artifacts" {
+  bucket = aws_s3_bucket.artifacts.id
+
+  rule {
+    id     = "glacier-transition"
+    status = "Enabled"
+
+    transition {
+      days          = 30
+      storage_class = "GLACIER"
+    }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+}
+
+data "aws_iam_policy_document" "k3s_s3_artifacts" {
+  statement {
+    actions = [
+      "s3:PutObject",
+      "s3:GetObject",
+      "s3:DeleteObject",
+    ]
+    resources = ["${aws_s3_bucket.artifacts.arn}/*"]
+    effect    = "Allow"
+  }
+
+  statement {
+    actions   = ["s3:ListBucket", "s3:GetBucketLocation"]
+    resources = [aws_s3_bucket.artifacts.arn]
+    effect    = "Allow"
+  }
+}
+
+resource "aws_iam_role_policy" "k3s_s3_artifacts" {
+  name   = "k3s-s3-artifacts"
+  role   = module.k3s.role_id
+  policy = data.aws_iam_policy_document.k3s_s3_artifacts.json
+}

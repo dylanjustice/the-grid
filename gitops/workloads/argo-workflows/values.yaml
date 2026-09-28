@@ -3,6 +3,13 @@ argo-workflows:
   controller:
     workflowNamespaces:
       - the-grid-synthetics
+    config: |
+      artifactRepository:
+        archiveLogs: true
+        s3:
+          bucket: 393657359434-us-east-2-artifacts
+          region: us-east-2
+          useSDKCreds: true
   workflow:
     serviceAccount:
       name: playwright-synthetics-sa

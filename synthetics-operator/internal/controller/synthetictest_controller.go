@@ -159,6 +159,17 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		Metrics:   syntheticTestMetrics(),
 	}
 
+	if syntheticTest.Spec.ArtifactStorage != nil && syntheticTest.Spec.ArtifactStorage.Enabled {
+		template.Outputs = wfv1.Outputs{
+			Artifacts: wfv1.Artifacts{
+				{
+					Name: "playwright-report",
+					Path: "/app/playwright-report",
+				},
+			},
+		}
+	}
+
 	workflow := &wfv1.CronWorkflow{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      syntheticTest.Name,
@@ -247,7 +258,6 @@ func syntheticTestMetrics() *wfv1.Metrics {
 	}
 }
 
-// SetupWithManager sets up the controller with the Manager.
 func (r *SyntheticTestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&gridv1alpha1.SyntheticTest{}).

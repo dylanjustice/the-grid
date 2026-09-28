@@ -27,9 +27,10 @@ type SyntheticTestRunSpec struct {
 }
 
 type SyntheticTestRunStatus struct {
-	Phase      string       `json:"phase"` // Succeeded, Failed, Running
-	FinishedAt *metav1.Time `json:"finishedAt,omitempty"`
-	Message    string       `json:"message,omitempty"`
+	Phase       string       `json:"phase"` // Succeeded, Failed, Running
+	FinishedAt  *metav1.Time `json:"finishedAt,omitempty"`
+	Message     string       `json:"message,omitempty"`
+	ArtifactURL string       `json:"artifactURL,omitempty"`
 }
 
 // +kubebuilder:object:root=true

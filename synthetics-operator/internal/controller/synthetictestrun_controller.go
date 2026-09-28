@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,7 +40,6 @@ import (
 // +kubebuilder:rbac:groups=thegrid.io,resources=synthetictestruns/finalizers,verbs=update
 // +kubebuilder:rbac:groups=argoproj.io,resources=workflows,verbs=get;list;watch
 
-// SyntheticTestRunReconciler reconciles a SyntheticTestRun object
 type SyntheticTestRunReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
@@ -84,11 +84,56 @@ func (r *SyntheticTestRunReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, err
 	}
 
-	log.Info("created SyntheticTestRun", "workflow", workflow.Name, "phase", workflow.Status.Phase)
+	existing := &gridv1alpha1.SyntheticTestRun{}
+	if err := r.Get(ctx, types.NamespacedName{Name: run.Name, Namespace: run.Namespace}, existing); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	existing.Status.Phase = string(workflow.Status.Phase)
+	existing.Status.Message = workflow.Status.Message
+	if !workflow.Status.FinishedAt.IsZero() {
+		t := workflow.Status.FinishedAt.DeepCopy()
+		existing.Status.FinishedAt = t
+	}
+	if url := artifactURL(workflow); url != "" {
+		existing.Status.ArtifactURL = url
+	}
+
+	if err := r.Status().Update(ctx, existing); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	log.Info("reconciled SyntheticTestRun", "workflow", workflow.Name, "phase", workflow.Status.Phase)
 	return ctrl.Result{}, nil
 }
 
-// SetupWithManager sets up the controller with the Manager.
+func artifactURL(workflow *wfv1.Workflow) string {
+	for _, node := range workflow.Status.Nodes {
+		if node.Outputs == nil {
+			continue
+		}
+		for _, a := range node.Outputs.Artifacts {
+			if a.Name != "playwright-report" {
+				continue
+			}
+			if a.S3 != nil {
+				return fmt.Sprintf("s3://%s/%s", a.S3.Bucket, a.S3.Key)
+			}
+			if a.GCS != nil {
+				return fmt.Sprintf("gs://%s/%s", a.GCS.Bucket, a.GCS.Key)
+			}
+			if a.Azure != nil {
+				return fmt.Sprintf("%s/%s/%s",
+					a.Azure.Endpoint, a.Azure.Container, a.Azure.Blob)
+			}
+			if a.OSS != nil {
+				return fmt.Sprintf("oss://%s/%s", a.OSS.Bucket, a.OSS.Key)
+			}
+		}
+	}
+	return ""
+}
+
 func (r *SyntheticTestRunReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&wfv1.Workflow{}, builder.WithPredicates(

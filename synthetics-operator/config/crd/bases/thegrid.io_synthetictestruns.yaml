@@ -51,6 +51,8 @@ spec:
             type: object
           status:
             properties:
+              artifactURL:
+                type: string
               finishedAt:
                 format: date-time
                 type: string

@@ -25,12 +25,17 @@ type SyntheticTestSource struct {
 	Inline string `json:"inline,omitempty"`
 }
 
+type ArtifactStorageSpec struct {
+	Enabled bool `json:"enabled"`
+}
+
 type SyntheticTestSpec struct {
-	Schedule           string              `json:"schedule,omitempty"`
-	Source             SyntheticTestSource `json:"source,omitempty"`
-	ServiceAccountName *string             `json:"serviceAccountName,omitempty"`
-	Entrypoint         string              `json:"entrypoint,omitempty"`
-	Container          v1.Container        `json:"container,omitempty"`
+	Schedule           string               `json:"schedule,omitempty"`
+	Source             SyntheticTestSource  `json:"source,omitempty"`
+	ServiceAccountName *string              `json:"serviceAccountName,omitempty"`
+	Entrypoint         string               `json:"entrypoint,omitempty"`
+	Container          v1.Container         `json:"container,omitempty"`
+	ArtifactStorage    *ArtifactStorageSpec `json:"artifactStorage,omitempty"`
 }
 
 // SyntheticTestStatus defines the observed state of SyntheticTest.
