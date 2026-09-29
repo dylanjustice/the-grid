@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
@@ -212,7 +213,16 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if err := ctrl.SetControllerReference(syntheticTest, workflow, r.Scheme); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err := r.Create(ctx, workflow); err != nil && !errors.IsAlreadyExists(err) {
+
+	existing := &wfv1.CronWorkflow{}
+	existing.Name = workflow.Name
+	existing.Namespace = workflow.Namespace
+	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, existing, func() error {
+		existing.Labels = workflow.Labels
+		existing.Spec = workflow.Spec
+		return ctrl.SetControllerReference(syntheticTest, existing, r.Scheme)
+	})
+	if err != nil {
 		return ctrl.Result{}, err
 	}
 
