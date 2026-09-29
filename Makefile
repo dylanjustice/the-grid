@@ -189,7 +189,7 @@ operator-docker-push:
 	$(MAKE) -C synthetics-operator docker-push IMG=$(ECR_URL)/flynn/synthetics-operator:$(GIT_SHA)
 
 operator-deploy:
-	$(MAKE) -C synthetics-operator deploy
+	$(MAKE) -C synthetics-operator deploy IMG=$(ECR_URL)/flynn/synthetics-operator:$(GIT_SHA)
 
 # Convenience targets
 all-init: bootstrap-init live-init

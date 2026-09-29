@@ -156,7 +156,7 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	template := wfv1.Template{
 		Name:      "run",
 		Container: &container,
-		Metrics:   syntheticTestMetrics(),
+		Metrics:   syntheticTestMetrics(syntheticTest.Name),
 	}
 
 	if syntheticTest.Spec.ArtifactStorage != nil && syntheticTest.Spec.ArtifactStorage.Enabled {
@@ -225,7 +225,7 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 //
 //   - synthetic_test_runs_total (counter)   — availability / error-rate SLO
 //   - synthetic_test_duration_seconds (histogram) — duration SLO
-func syntheticTestMetrics() *wfv1.Metrics {
+func syntheticTestMetrics(testName string) *wfv1.Metrics {
 	durationBuckets := []float64{1, 5, 10, 30, 60, 120, 300}
 	amounts := make([]wfv1.Amount, len(durationBuckets))
 	for i, b := range durationBuckets {
@@ -233,7 +233,7 @@ func syntheticTestMetrics() *wfv1.Metrics {
 	}
 
 	labels := []*wfv1.MetricLabel{
-		{Key: "test_name", Value: "{{workflow.labels['the-grid.io/synthetic-test']}}"},
+		{Key: "test_name", Value: testName},
 		{Key: "status", Value: "{{status}}"},
 	}
 
