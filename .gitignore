@@ -123,6 +123,5 @@ kubeconfig.yaml
 #=========================
 # BotFiles
 .claude
-.specify
 
 # End of file
