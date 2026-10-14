@@ -50,8 +50,10 @@ over. Consistency of ownership prevents split-brain cluster state.
 
 All synthetic tests MUST use `@the-grid/synthetics` once milestone 1 ships. Raw `prom-client`
 calls in individual test files are a stopgap and MUST NOT be introduced after the library is
-published. Standardized labels (`test_suite`, `step_name`, `status`, `environment`) are
-non-negotiable — custom label sets are not permitted without a constitution amendment.
+published. Standardized labels (`test_suite`, `test_name`, `step_name`, `status`, `environment`)
+are non-negotiable — custom label sets are not permitted without a constitution amendment.
+Valid `status` values are `success`, `failure`, `timeout`, and `skip`; `step_name` is omitted
+on test-level metrics.
 
 **Rationale:** Consistent labels are the prerequisite for every cross-test dashboard and
 alerting rule. Label drift makes the metrics useless at scale.
@@ -98,12 +100,14 @@ This constitution supersedes all other engineering practices for The Grid. Confl
 this document and any other guide, README, or convention are resolved in favor of this document.
 
 **Amendment procedure:**
+
 1. Open a PR to `main` with the proposed change to `.specify/memory/constitution.md`.
 2. State the version bump type (MAJOR/MINOR/PATCH) and rationale in the PR description.
 3. At least one additional contributor MUST review and approve before merge.
 4. Update `LAST_AMENDED_DATE` and `CONSTITUTION_VERSION` in the version line.
 
 **Versioning policy:** Semantic versioning applies.
+
 - MAJOR: Removal or redefinition of a principle that breaks backward compatibility with existing
   practices.
 - MINOR: New principle, new section, or materially expanded guidance.

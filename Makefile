@@ -1,4 +1,4 @@
-.PHONY: help docker-login docker-build terraform-init terraform-plan terraform-apply terraform-destroy argo-ui argo-sync k3s-destroy k3s-start test
+.PHONY: help docker-login docker-build terraform-init terraform-plan terraform-apply terraform-destroy argo-ui argo-sync k3s-destroy k3s-start test pushgateway-start pushgateway-stop test-reporter
 
 # Variables
 AWS_ACCOUNT ?= $(shell aws sts get-caller-identity --query Account --output text)
@@ -42,7 +42,11 @@ help:
 	@echo "  k3s-destroy           - Destroy only the k3s instance to save cost"
 	@echo "  k3s-start             - Recreate the k3s instance"
 	@echo "  k3s-bootstrap         - Bootstrap k3s cluster with necessary tools and configurations"
-	@echo "  test                  - Run Playwright tests with UI mode"
+	@echo "  test                  - Run Playwright tests headlessly"
+	@echo "  test-ui               - Run Playwright tests with interactive UI"
+	@echo "  pushgateway-start     - Start a local Pushgateway container on :9091"
+	@echo "  pushgateway-stop      - Stop and remove the local Pushgateway container"
+	@echo "  test-reporter         - Run tests against local Pushgateway to validate reporter"
 	@echo "  operator-generate     - Generate CRD manifests and DeepCopy methods"
 	@echo "  operator-build        - Build the operator binary"
 	@echo "  operator-test         - Run operator unit tests"
@@ -171,6 +175,22 @@ test:
 	cd playwright-synthetics && npx playwright test
 test-ui:
 	cd playwright-synthetics && npx playwright test --ui
+
+PUSHGATEWAY_CONTAINER ?= grid-pushgateway
+PUSHGATEWAY_PORT ?= 9091
+
+pushgateway-start:
+	@echo "Starting Pushgateway on :$(PUSHGATEWAY_PORT)..."
+	docker run -d -p $(PUSHGATEWAY_PORT):9091 --name $(PUSHGATEWAY_CONTAINER) prom/pushgateway
+	@echo "Pushgateway running at http://localhost:$(PUSHGATEWAY_PORT)"
+
+pushgateway-stop:
+	@echo "Stopping Pushgateway..."
+	docker rm -f $(PUSHGATEWAY_CONTAINER) || true
+
+test-reporter:
+	@echo "Running reporter validation against local Pushgateway..."
+	cd playwright-synthetics && PUSHGATEWAY_URL=http://localhost:$(PUSHGATEWAY_PORT) GRID_ENV=local npx playwright test
 
 # Operator targets
 operator-generate:

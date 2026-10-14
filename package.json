@@ -1,0 +1,9 @@
+{
+  "name": "the-grid",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "playwright-synthetics",
+    "runner"
+  ]
+}
