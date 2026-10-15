@@ -10,7 +10,7 @@
 instruments every Test Step and Synthetic Test with Prometheus metrics — no boilerplate in
 test files. Configured once in `playwright.config.ts`.
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Zero-boilerplate step metrics (Priority: P1)
 
@@ -111,7 +111,7 @@ Argo Workflows' own metrics endpoint.
 - What if multiple spec files run in parallel? Each reporter instance pushes independently;
   `pushAdd` (not `push`) is used so observations accumulate rather than overwrite.
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -148,7 +148,7 @@ Argo Workflows' own metrics endpoint.
 - **LabelResolver**: Logic that derives `test_suite` from a `TestCase`'s suite hierarchy and
   `status` from `TestResult`/`TestStep` state.
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 

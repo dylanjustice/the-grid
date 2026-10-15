@@ -13,7 +13,9 @@ test("HTTP Methods", async ({ page }) => {
     await op.click();
     await op.locator("button", { hasText: "Try it out" }).click();
     await op.locator("button", { hasText: "Execute" }).click();
-    await expect(op.locator("td.response-col_status:not(.col_header)").first()).toHaveText("200");
+    await expect(
+      op.locator("td.response-col_status:not(.col_header)").first(),
+    ).toHaveText("200");
   });
 
   await test.step("GET", async () => {
@@ -21,7 +23,9 @@ test("HTTP Methods", async ({ page }) => {
     await op.click();
     await op.locator("button", { hasText: "Try it out" }).click();
     await op.locator("button", { hasText: "Execute" }).click();
-    await expect(op.locator("td.response-col_status:not(.col_header)").first()).toHaveText("200");
+    await expect(
+      op.locator("td.response-col_status:not(.col_header)").first(),
+    ).toHaveText("200");
   });
 
   await test.step("PATCH", async () => {
@@ -29,7 +33,9 @@ test("HTTP Methods", async ({ page }) => {
     await op.click();
     await op.locator("button", { hasText: "Try it out" }).click();
     await op.locator("button", { hasText: "Execute" }).click();
-    await expect(op.locator("td.response-col_status:not(.col_header)").first()).toHaveText("200");
+    await expect(
+      op.locator("td.response-col_status:not(.col_header)").first(),
+    ).toHaveText("200");
   });
 
   await test.step("POST", async () => {
@@ -37,7 +43,9 @@ test("HTTP Methods", async ({ page }) => {
     await op.click();
     await op.locator("button", { hasText: "Try it out" }).click();
     await op.locator("button", { hasText: "Execute" }).click();
-    await expect(op.locator("td.response-col_status:not(.col_header)").first()).toHaveText("200");
+    await expect(
+      op.locator("td.response-col_status:not(.col_header)").first(),
+    ).toHaveText("200");
   });
 
   await test.step("PUT", async () => {
@@ -45,6 +53,8 @@ test("HTTP Methods", async ({ page }) => {
     await op.click();
     await op.locator("button", { hasText: "Try it out" }).click();
     await op.locator("button", { hasText: "Execute" }).click();
-    await expect(op.locator("td.response-col_status:not(.col_header)").first()).toHaveText("200");
+    await expect(
+      op.locator("td.response-col_status:not(.col_header)").first(),
+    ).toHaveText("200");
   });
 });

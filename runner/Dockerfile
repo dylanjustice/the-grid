@@ -25,17 +25,27 @@ RUN apt-get update && apt-get install -y \
 
 FROM base AS build
 
+# Copy workspace root manifests
 COPY package.json package-lock.json ./
-RUN npm ci
+
+# Copy workspace packages needed by the runner
+COPY packages/synthetics/ ./packages/synthetics/
+COPY runner/package.json ./runner/
+
+RUN npm ci --workspace=runner --workspace=@the-grid/synthetics --include-workspace-root
+
+RUN npm run build -w @the-grid/synthetics
 
 RUN npx playwright install chromium
+
 
 FROM base AS runtime
 
 WORKDIR /app
 
 COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/packages/synthetics/dist ./packages/synthetics/dist
 COPY --from=build /root/.cache/ms-playwright /root/.cache/ms-playwright
-COPY playwright.config.ts .
+COPY runner/playwright.config.ts .
 
 CMD ["npx", "playwright", "test"]

@@ -76,7 +76,7 @@ docker-push-tests: docker-build docker-login
 
 docker-build-runner:
 	@echo "Building Docker image: $(RUNNER_ECR_REPO):$(GIT_SHA)..."
-	docker build -t $(RUNNER_ECR_REPO):$(GIT_SHA) -t $(RUNNER_ECR_REPO):latest runner/
+	docker build -f runner/Dockerfile -t $(RUNNER_ECR_REPO):$(GIT_SHA) -t $(RUNNER_ECR_REPO):latest .
 
 docker-push-runner: docker-build docker-login
 	@echo "Pushing Docker image to ECR..."

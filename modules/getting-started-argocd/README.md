@@ -54,11 +54,11 @@ export KUBECONFIG="/tmp/getting-started-gitops"
 aws eks --region us-west-2 update-kubeconfig --name getting-started-gitops
 ```
 
->The first line sets the `KUBECONFIG` environment variable to a temporary file
-that includes the cluster name. The second line uses the `aws` CLI to populate
-that temporary file with the `kubectl` configuration. This approach offers the
-advantage of not altering your existing `kubectl` context, allowing you to work
-in other terminal windows without interference.
+> The first line sets the `KUBECONFIG` environment variable to a temporary file
+> that includes the cluster name. The second line uses the `aws` CLI to populate
+> that temporary file with the `kubectl` configuration. This approach offers the
+> advantage of not altering your existing `kubectl` context, allowing you to work
+> in other terminal windows without interference.
 
 Terraform will add GitOps Bridge Metadata to the ArgoCD secret.
 The annotations contain metadata for the addons' Helm charts and ArgoCD ApplicationSets.
@@ -266,7 +266,7 @@ The expected output should look like the following:
   Content-Length: 3988
 ```
 
->A success response should contain `HTTP/1.1 200 OK`.
+> A success response should contain `HTTP/1.1 200 OK`.
 
 Retrieve the ingress URL to access the application in your local web browser.
 
