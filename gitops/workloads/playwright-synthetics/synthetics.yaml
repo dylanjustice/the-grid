@@ -11,6 +11,7 @@ spec:
   serviceAccountName: httpbin-synthetic-sa
   entrypoint: run
   container:
+    name: playwright
     env:
       - name: PUSHGATEWAY_URL
         value: "http://playwright-synthetics-prometheus-pushgateway.the-grid-synthetics.svc.cluster.local:9091"
