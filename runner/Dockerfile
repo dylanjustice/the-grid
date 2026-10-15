@@ -44,6 +44,7 @@ FROM base AS runtime
 WORKDIR /app
 
 COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/packages/synthetics/package.json ./packages/synthetics/package.json
 COPY --from=build /app/packages/synthetics/dist ./packages/synthetics/dist
 COPY --from=build /root/.cache/ms-playwright /root/.cache/ms-playwright
 COPY runner/playwright.config.ts .
