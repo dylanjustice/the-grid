@@ -204,8 +204,9 @@ func main() {
 	}
 
 	if err := (&controller.SyntheticTestReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:          mgr.GetClient(),
+		Scheme:          mgr.GetScheme(),
+		WorkflowBuilder: &controller.DefaultWorkflowBuilder{},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "SyntheticTest")
 		os.Exit(1)

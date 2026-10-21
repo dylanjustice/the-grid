@@ -37,7 +37,8 @@ import (
 // SyntheticTestReconciler reconciles a SyntheticTest object
 type SyntheticTestReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme          *runtime.Scheme
+	WorkflowBuilder WorkflowBuilder
 }
 
 // +kubebuilder:rbac:groups=thegrid.io,resources=synthetictests,verbs=get;list;watch;create;update;patch;delete
@@ -137,74 +138,9 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, err
 	}
 
-	container := syntheticTest.Spec.Container
-	if container.Image == "" {
-		container.Image = "393657359434.dkr.ecr.us-east-2.amazonaws.com/flynn/playwright-runner-js:latest"
-	}
-	if len(container.Command) == 0 {
-		container.Command = []string{"npx", "playwright", "test"}
-	}
-	if container.Name == "" {
-		container.Name = "playwright"
-	}
-	container.VolumeMounts = append(container.VolumeMounts, corev1.VolumeMount{
-		Name:      syntheticTest.Name + "-source",
-		MountPath: "/app/tests",
-	})
-
-	template := wfv1.Template{
-		Name:      "run",
-		Container: &container,
-	}
-
-	if syntheticTest.Spec.ArtifactStorage != nil && syntheticTest.Spec.ArtifactStorage.Enabled {
-		template.Outputs = wfv1.Outputs{
-			Artifacts: wfv1.Artifacts{
-				{
-					Name: "playwright-report",
-					Path: "/app/playwright-report",
-				},
-			},
-		}
-	}
-
-	workflow := &wfv1.CronWorkflow{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      syntheticTest.Name,
-			Namespace: syntheticTest.Namespace,
-			Labels: map[string]string{
-				"the-grid.io/synthetic-test": syntheticTest.Name,
-			},
-		},
-		Spec: wfv1.CronWorkflowSpec{
-			Schedules: []string{
-				syntheticTest.Spec.Schedule,
-			},
-			WorkflowMetadata: &metav1.ObjectMeta{
-				Labels: map[string]string{
-					"the-grid.io/synthetic-test": syntheticTest.Name,
-				},
-			},
-			WorkflowSpec: wfv1.WorkflowSpec{
-				ServiceAccountName: *syntheticTest.Spec.ServiceAccountName,
-				Entrypoint:         syntheticTest.Spec.Entrypoint,
-				Templates: []wfv1.Template{
-					template,
-				},
-				Volumes: []corev1.Volume{
-					{
-						Name: syntheticTest.Name + "-source",
-						VolumeSource: corev1.VolumeSource{
-							ConfigMap: &corev1.ConfigMapVolumeSource{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: configMapName,
-								},
-							},
-						},
-					},
-				},
-			},
-		},
+	workflow, err := r.WorkflowBuilder.BuildCronWorkflow(ctx, syntheticTest)
+	if err != nil {
+		return ctrl.Result{}, err
 	}
 
 	if err := ctrl.SetControllerReference(syntheticTest, workflow, r.Scheme); err != nil {
@@ -214,7 +150,7 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	existing := &wfv1.CronWorkflow{}
 	existing.Name = workflow.Name
 	existing.Namespace = workflow.Namespace
-	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, existing, func() error {
+	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, existing, func() error {
 		existing.Labels = workflow.Labels
 		existing.Spec = workflow.Spec
 		return ctrl.SetControllerReference(syntheticTest, existing, r.Scheme)

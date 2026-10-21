@@ -1,0 +1,169 @@
+package controller
+
+import (
+	"context"
+	"fmt"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
+	gridv1alpha1 "github.com/dylanjustice/the-grid/synthetics-operator/api/v1alpha1"
+)
+
+// fakeWorkflowBuilder implements WorkflowBuilder for use in reconciler tests.
+type fakeWorkflowBuilder struct {
+	buildCronWorkflowCalled int
+	buildWorkflowCalled     int
+	receivedTest            *gridv1alpha1.SyntheticTest
+	cronWorkflowResult      *wfv1.CronWorkflow
+	workflowResult          *wfv1.Workflow
+	err                     error
+}
+
+func (f *fakeWorkflowBuilder) BuildCronWorkflow(_ context.Context, test *gridv1alpha1.SyntheticTest) (*wfv1.CronWorkflow, error) {
+	f.buildCronWorkflowCalled++
+	f.receivedTest = test
+	return f.cronWorkflowResult, f.err
+}
+
+func (f *fakeWorkflowBuilder) BuildWorkflow(_ context.Context, test *gridv1alpha1.SyntheticTest) (*wfv1.Workflow, error) {
+	f.buildWorkflowCalled++
+	f.receivedTest = test
+	return f.workflowResult, f.err
+}
+
+func buildFakeScheme() *runtime.Scheme {
+	s := runtime.NewScheme()
+	_ = clientgoscheme.AddToScheme(s)
+	_ = wfv1.AddToScheme(s)
+	_ = gridv1alpha1.AddToScheme(s)
+	return s
+}
+
+var _ = Describe("SyntheticTest Controller (fake builder)", func() {
+	const (
+		testName      = "test-synthetic"
+		testNamespace = "default"
+	)
+
+	var (
+		testScheme *runtime.Scheme
+		sa         string
+	)
+
+	BeforeEach(func() {
+		testScheme = buildFakeScheme()
+		sa = "test-sa"
+	})
+
+	newSyntheticTest := func() *gridv1alpha1.SyntheticTest {
+		return &gridv1alpha1.SyntheticTest{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      testName,
+				Namespace: testNamespace,
+				UID:       types.UID("test-uid-1234"),
+			},
+			Spec: gridv1alpha1.SyntheticTestSpec{
+				Schedule:           "*/5 * * * *",
+				ServiceAccountName: &sa,
+				Entrypoint:         "run",
+				Source: gridv1alpha1.SyntheticTestSource{
+					Inline: "import { test } from '@playwright/test'",
+				},
+			},
+		}
+	}
+
+	newCronWorkflow := func() *wfv1.CronWorkflow {
+		return &wfv1.CronWorkflow{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      testName,
+				Namespace: testNamespace,
+			},
+			Spec: wfv1.CronWorkflowSpec{
+				Schedules: []string{"*/5 * * * *"},
+			},
+		}
+	}
+
+	buildReconciler := func(builder WorkflowBuilder, syntheticTest *gridv1alpha1.SyntheticTest) *SyntheticTestReconciler {
+		fakeClient := fake.NewClientBuilder().
+			WithScheme(testScheme).
+			WithObjects(syntheticTest).
+			Build()
+		return &SyntheticTestReconciler{
+			Client:          fakeClient,
+			Scheme:          testScheme,
+			WorkflowBuilder: builder,
+		}
+	}
+
+	reconcileRequest := func() reconcile.Request {
+		return reconcile.Request{
+			NamespacedName: types.NamespacedName{
+				Name:      testName,
+				Namespace: testNamespace,
+			},
+		}
+	}
+
+	Context("create path", func() {
+		It("calls BuildCronWorkflow with the SyntheticTest and applies the returned CronWorkflow", func() {
+			st := newSyntheticTest()
+			cw := newCronWorkflow()
+			fake := &fakeWorkflowBuilder{cronWorkflowResult: cw}
+			r := buildReconciler(fake, st)
+
+			_, err := r.Reconcile(context.Background(), reconcileRequest())
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(fake.buildCronWorkflowCalled).To(Equal(1))
+			Expect(fake.receivedTest.Name).To(Equal(testName))
+
+			applied := &wfv1.CronWorkflow{}
+			err = r.Client.Get(context.Background(), types.NamespacedName{Name: testName, Namespace: testNamespace}, applied)
+			Expect(err).NotTo(HaveOccurred())
+		})
+	})
+
+	Context("error path", func() {
+		It("returns the builder error and does not apply any CronWorkflow", func() {
+			st := newSyntheticTest()
+			builderErr := fmt.Errorf("construction failed")
+			fake := &fakeWorkflowBuilder{err: builderErr}
+			r := buildReconciler(fake, st)
+
+			_, err := r.Reconcile(context.Background(), reconcileRequest())
+			Expect(err).To(MatchError(builderErr))
+
+			missing := &wfv1.CronWorkflow{}
+			getErr := r.Client.Get(context.Background(), types.NamespacedName{Name: testName, Namespace: testNamespace}, missing)
+			Expect(getErr).To(HaveOccurred())
+		})
+	})
+
+	Context("update path", func() {
+		It("calls BuildCronWorkflow on each reconcile", func() {
+			st := newSyntheticTest()
+			cw := newCronWorkflow()
+			fake := &fakeWorkflowBuilder{cronWorkflowResult: cw}
+			r := buildReconciler(fake, st)
+
+			_, err := r.Reconcile(context.Background(), reconcileRequest())
+			Expect(err).NotTo(HaveOccurred())
+
+			_, err = r.Reconcile(context.Background(), reconcileRequest())
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(fake.buildCronWorkflowCalled).To(Equal(2))
+		})
+	})
+})

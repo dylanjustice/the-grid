@@ -93,6 +93,8 @@ because the monitoring pipeline had a hiccup. Partial observability is better th
   breaking the Helm chart contract is not.
 - Pushing to `main` triggers ArgoCD reconciliation within ~3 minutes. Force-sync with
   `make argo-sync` is permitted but MUST NOT become a substitute for fixing root causes.
+- Code should be self documenting. Only add code comments for code that is obscure or seems
+  deliberately out of character.
 
 ## Governance
 
