@@ -244,8 +244,9 @@ func buildArtifactRepositoryYAML(storage *gridv1alpha1.ArtifactStorageSpec) (str
 		KeyFormat: keyFormat,
 	}
 
-	// IAM delegation takes precedence over static credentials.
-	if len(storage.ServiceAccountAnnotations) > 0 {
+	// UseSDKCreds covers EC2 instance profile, EKS IRSA (via SA annotation), and
+	// any other ambient AWS credential source. ServiceAccountAnnotations also imply it.
+	if storage.UseSDKCreds || len(storage.ServiceAccountAnnotations) > 0 {
 		s3.UseSDKCreds = true
 	} else if storage.CredentialsSecret != "" {
 		s3.AccessKeySecret = &secretKeyRef{Name: storage.CredentialsSecret, Key: "accessKey"}

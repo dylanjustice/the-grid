@@ -50,11 +50,18 @@ type ArtifactStorageSpec struct {
 	// +kubebuilder:validation:Optional
 	CredentialsSecret string `json:"credentialsSecret,omitempty"`
 
+	// UseSDKCreds instructs the artifact store to use the AWS SDK default
+	// credential chain (environment variables, EC2 instance profile, ECS task
+	// role, etc.) instead of explicit credentials. Set this to true when running
+	// on EC2 with an instance profile or in any environment where ambient
+	// credentials are available. CredentialsSecret is ignored when true.
+	// +kubebuilder:validation:Optional
+	UseSDKCreds bool `json:"useSDKCreds,omitempty"`
+
 	// ServiceAccountAnnotations are merged onto the workflow ServiceAccount.
-	// Use {"eks.amazonaws.com/role-arn": "<arn>"} for AWS IRSA.
+	// Use {"eks.amazonaws.com/role-arn": "<arn>"} for AWS IRSA (EKS only).
 	// Use {"iam.gke.io/gcp-service-account": "<email>"} for GKE Workload Identity.
-	// When non-empty the artifact repository uses ambient SDK credentials
-	// (useSDKCreds: true); CredentialsSecret is ignored.
+	// When non-empty, also implies UseSDKCreds. CredentialsSecret is ignored.
 	// +kubebuilder:validation:Optional
 	ServiceAccountAnnotations map[string]string `json:"serviceAccountAnnotations,omitempty"`
 }
