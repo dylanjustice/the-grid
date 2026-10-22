@@ -8,11 +8,14 @@ Accepted
 
 ## Context
 
-Synthetic tests need to run on a schedule inside the cluster. The obvious Kubernetes primitive is a `CronJob`, but raw CronJobs have no retry policy, no workflow-level artifacts, no execution history, and no UI. We needed something that could grow with the platform — DAG support, per-step artifact collection, and a developer-facing UI without building one.
+Synthetic tests need to run on a schedule inside the cluster. The obvious Kubernetes primitive is a `CronJob`,
+but raw CronJobs have no retry policy, no workflow-level artifacts, no execution history, and no UI. We needed something
+that could grow with the platform — DAG support, per-step artifact collection, and a developer-facing UI without building one.
 
 ## Decision
 
-We use Argo Workflows (`CronWorkflow`) as the scheduler and execution engine. The operator reconciles each `SyntheticTest` CR into an Argo `CronWorkflow`. Argo handles scheduling, pod lifecycle, retries, and artifact upload.
+We use Argo Workflows (`CronWorkflow`) as the scheduler and execution engine. The operator reconciles each `SyntheticTest` CR
+into an Argo `CronWorkflow`. Argo handles scheduling, pod lifecycle, retries, and artifact upload.
 
 ## Consequences
 

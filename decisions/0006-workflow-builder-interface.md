@@ -8,11 +8,16 @@ Accepted
 
 ## Context
 
-The `SyntheticTestReconciler` originally constructed Argo `CronWorkflow` structs inline. This made the reconciler hard to unit test (tests required the full Argo type graph), and it left no clean path for on-demand or event-driven workflow execution, which would need the same construction logic without a schedule.
+The `SyntheticTestReconciler` originally constructed Argo `CronWorkflow` structs inline. This made the reconciler
+hard to unit test (tests required the full Argo type graph), and it left no clean path for on-demand or event-driven
+workflow execution, which would need the same construction logic without a schedule.
 
 ## Decision
 
-We extract all Argo object construction into a `WorkflowBuilder` interface with two methods: `BuildCronWorkflow` and `BuildWorkflow`. The reconciler holds a `WorkflowBuilder` via constructor injection and calls it in place of all inline struct literals. The production `DefaultWorkflowBuilder` is stateless. A `FakeWorkflowBuilder` enables isolated reconciler tests.
+We extract all Argo object construction into a `WorkflowBuilder` interface with two methods: `BuildCronWorkflow`
+and `BuildWorkflow`. The reconciler holds a `WorkflowBuilder` via constructor injection and calls it in place of
+all inline struct literals. The production `DefaultWorkflowBuilder` is stateless. A `FakeWorkflowBuilder` enables
+isolated reconciler tests.
 
 ## Consequences
 

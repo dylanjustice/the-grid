@@ -8,11 +8,15 @@ Accepted
 
 ## Context
 
-Test runner pods are ephemeral — they start, run Playwright, and exit. Prometheus's default pull model requires a running HTTP endpoint to scrape; a pod that exits in seconds is never scraped. We needed a way to get test results into Prometheus without keeping pods alive.
+Test runner pods are ephemeral — they start, run Playwright, and exit. Prometheus's default pull model
+requires a running HTTP endpoint to scrape; a pod that exits in seconds is never scraped. We needed a way
+to get test results into Prometheus without keeping pods alive.
 
 ## Decision
 
-We use the Prometheus Pushgateway. Test runners push metrics (`synthetic_step_duration_seconds`, `synthetic_test_duration_seconds`) to the Pushgateway immediately after a run. Prometheus scrapes the Pushgateway on its normal interval. The Pushgateway runs as a persistent service in the cluster.
+We use the Prometheus Pushgateway. Test runners push metrics (`synthetic_step_duration_seconds`,
+`synthetic_test_duration_seconds`) to the Pushgateway immediately after a run. Prometheus scrapes the Pushgateway
+on its normal interval. The Pushgateway runs as a persistent service in the cluster.
 
 ## Consequences
 

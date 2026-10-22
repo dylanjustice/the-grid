@@ -8,11 +8,17 @@ Accepted
 
 ## Context
 
-Tests need a management surface — a way to define, update, and delete them without editing Helm values or touching Argo directly. Options considered: Helm values (inflexible, requires chart upgrade to change a schedule), a custom REST API (another service to build and secure), or Kubernetes Custom Resources (native to the cluster, GitOps-friendly, `kubectl`-manageable).
+Tests need a management surface — a way to define, update, and delete them without editing Helm values or
+touching Argo directly. Options considered: Helm values (inflexible, requires chart upgrade to change a schedule),
+a custom REST API (another service to build and secure), or Kubernetes Custom Resources (native to the cluster,
+GitOps-friendly, `kubectl`-manageable).
 
 ## Decision
 
-We model synthetic tests as Kubernetes Custom Resources (`SyntheticTest`) and run a kubebuilder operator to reconcile them. The operator watches `SyntheticTest` objects and owns the `CronWorkflow`, `ConfigMap`, `ServiceAccount`, `Role`, and `RoleBinding` that implement each test. A second CRD (`SyntheticTestRun`) mirrors completed workflow runs as structured objects so the UI has a typed API without calling Argo directly.
+We model synthetic tests as Kubernetes Custom Resources (`SyntheticTest`) and run a kubebuilder operator to
+reconcile them. The operator watches `SyntheticTest` objects and owns the `CronWorkflow`, `ConfigMap`, `ServiceAccount`,
+`Role`, and `RoleBinding` that implement each test. A second CRD (`SyntheticTestRun`) mirrors completed workflow runs as
+structured objects so the UI has a typed API without calling Argo directly.
 
 ## Consequences
 
