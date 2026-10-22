@@ -182,13 +182,13 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 // artifactRepoS3 is the schema for the s3 section of an Argo artifact repository ConfigMap entry.
 type artifactRepoS3 struct {
-	Bucket          string         `json:"bucket"`
-	Endpoint        string         `json:"endpoint,omitempty"`
-	Region          string         `json:"region,omitempty"`
-	UseSDKCreds     bool           `json:"useSDKCreds,omitempty"`
-	AccessKeySecret *secretKeyRef  `json:"accessKeySecret,omitempty"`
-	SecretKeySecret *secretKeyRef  `json:"secretKeySecret,omitempty"`
-	KeyFormat       string         `json:"keyFormat"`
+	Bucket          string        `json:"bucket"`
+	Endpoint        string        `json:"endpoint,omitempty"`
+	Region          string        `json:"region,omitempty"`
+	UseSDKCreds     bool          `json:"useSDKCreds,omitempty"`
+	AccessKeySecret *secretKeyRef `json:"accessKeySecret,omitempty"`
+	SecretKeySecret *secretKeyRef `json:"secretKeySecret,omitempty"`
+	KeyFormat       string        `json:"keyFormat"`
 }
 
 type secretKeyRef struct {

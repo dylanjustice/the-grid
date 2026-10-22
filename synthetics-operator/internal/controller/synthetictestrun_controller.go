@@ -80,26 +80,28 @@ func (r *SyntheticTestRunReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	if err := ctrl.SetControllerReference(syntheticTest, run, r.Scheme); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err := r.Create(ctx, run); err != nil && !errors.IsAlreadyExists(err) {
-		return ctrl.Result{}, err
+	if err := r.Create(ctx, run); err != nil {
+		if !errors.IsAlreadyExists(err) {
+			return ctrl.Result{}, err
+		}
+		// Object already exists — Get it to obtain the current ResourceVersion for the status update.
+		if err := r.Get(ctx, types.NamespacedName{Name: run.Name, Namespace: run.Namespace}, run); err != nil {
+			return ctrl.Result{}, err
+		}
 	}
+	// run is now either the just-created object (populated by the API server response) or the fetched existing one.
 
-	existing := &gridv1alpha1.SyntheticTestRun{}
-	if err := r.Get(ctx, types.NamespacedName{Name: run.Name, Namespace: run.Namespace}, existing); err != nil {
-		return ctrl.Result{}, err
-	}
-
-	existing.Status.Phase = string(workflow.Status.Phase)
-	existing.Status.Message = workflow.Status.Message
+	run.Status.Phase = string(workflow.Status.Phase)
+	run.Status.Message = workflow.Status.Message
 	if !workflow.Status.FinishedAt.IsZero() {
 		t := workflow.Status.FinishedAt.DeepCopy()
-		existing.Status.FinishedAt = t
+		run.Status.FinishedAt = t
 	}
 	if url := artifactURL(workflow); url != "" {
-		existing.Status.ArtifactURL = url
+		run.Status.ArtifactURL = url
 	}
 
-	if err := r.Status().Update(ctx, existing); err != nil {
+	if err := r.Status().Update(ctx, run); err != nil {
 		return ctrl.Result{}, err
 	}
 
