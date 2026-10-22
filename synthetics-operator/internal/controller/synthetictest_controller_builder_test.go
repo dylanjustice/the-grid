@@ -198,8 +198,7 @@ var _ = Describe("SyntheticTest Controller (fake builder)", func() {
 			Expect(data).To(ContainSubstring("key: accessKey"))
 			Expect(data).To(ContainSubstring("key: secretKey"))
 			Expect(data).NotTo(ContainSubstring("useSDKCreds"))
-			Expect(data).To(ContainSubstring("{{workflow.name}}"))
-			Expect(data).To(ContainSubstring("the-grid.io/synthetic-test"))
+			Expect(data).To(ContainSubstring("{{workflow.name}}/playwright-report"))
 		})
 
 		It("skips ConfigMap creation when bucket is empty", func() {

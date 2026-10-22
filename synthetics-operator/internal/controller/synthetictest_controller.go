@@ -235,7 +235,7 @@ func (r *SyntheticTestReconciler) reconcileArtifactRepository(ctx context.Contex
 }
 
 func buildArtifactRepositoryYAML(storage *gridv1alpha1.ArtifactStorageSpec) (string, error) {
-	const keyFormat = `{{workflow.labels["the-grid.io/synthetic-test"]}}/{{workflow.name}}/playwright-report`
+	const keyFormat = `{{workflow.name}}/playwright-report`
 
 	s3 := artifactRepoS3{
 		Bucket:    storage.Bucket,
