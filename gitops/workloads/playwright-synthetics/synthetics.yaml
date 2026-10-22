@@ -22,6 +22,7 @@ spec:
   artifactStorage:
     enabled: true
     bucket: 393657359434-us-east-2-artifacts
+    endpoint: s3.amazonaws.com
     region: us-east-2
     useSDKCreds: true
   source:
