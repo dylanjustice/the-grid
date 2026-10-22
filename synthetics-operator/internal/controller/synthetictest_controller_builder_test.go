@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -164,6 +165,119 @@ var _ = Describe("SyntheticTest Controller (fake builder)", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fake.buildCronWorkflowCalled).To(Equal(2))
+		})
+	})
+
+	Context("artifact storage — static credentials", func() {
+		It("creates an artifact-repository ConfigMap with accessKeySecret and secretKeySecret", func() {
+			st := newSyntheticTest()
+			st.Spec.ArtifactStorage = &gridv1alpha1.ArtifactStorageSpec{
+				Enabled:           true,
+				Bucket:            "test-bucket",
+				Region:            "us-east-2",
+				CredentialsSecret: "my-s3-creds",
+			}
+			cw := newCronWorkflow()
+			fake := &fakeWorkflowBuilder{cronWorkflowResult: cw}
+			r := buildReconciler(fake, st)
+
+			_, err := r.Reconcile(context.Background(), reconcileRequest())
+			Expect(err).NotTo(HaveOccurred())
+
+			cm := &corev1.ConfigMap{}
+			err = r.Client.Get(context.Background(), types.NamespacedName{
+				Name:      testName + "-artifact-repository",
+				Namespace: testNamespace,
+			}, cm)
+			Expect(err).NotTo(HaveOccurred())
+
+			data := cm.Data["default"]
+			Expect(data).To(ContainSubstring("bucket: test-bucket"))
+			Expect(data).To(ContainSubstring("region: us-east-2"))
+			Expect(data).To(ContainSubstring("name: my-s3-creds"))
+			Expect(data).To(ContainSubstring("key: accessKey"))
+			Expect(data).To(ContainSubstring("key: secretKey"))
+			Expect(data).NotTo(ContainSubstring("useSDKCreds"))
+			Expect(data).To(ContainSubstring("{{workflow.name}}"))
+			Expect(data).To(ContainSubstring("the-grid.io/synthetic-test"))
+		})
+
+		It("skips ConfigMap creation when bucket is empty", func() {
+			st := newSyntheticTest()
+			st.Spec.ArtifactStorage = &gridv1alpha1.ArtifactStorageSpec{
+				Enabled: true,
+				Bucket:  "",
+			}
+			cw := newCronWorkflow()
+			fake := &fakeWorkflowBuilder{cronWorkflowResult: cw}
+			r := buildReconciler(fake, st)
+
+			_, err := r.Reconcile(context.Background(), reconcileRequest())
+			Expect(err).NotTo(HaveOccurred())
+
+			cm := &corev1.ConfigMap{}
+			err = r.Client.Get(context.Background(), types.NamespacedName{
+				Name:      testName + "-artifact-repository",
+				Namespace: testNamespace,
+			}, cm)
+			Expect(err).To(HaveOccurred())
+		})
+	})
+
+	Context("artifact storage — IAM delegation", func() {
+		It("creates an artifact-repository ConfigMap with useSDKCreds and no credential keys", func() {
+			st := newSyntheticTest()
+			st.Spec.ArtifactStorage = &gridv1alpha1.ArtifactStorageSpec{
+				Enabled: true,
+				Bucket:  "iam-bucket",
+				ServiceAccountAnnotations: map[string]string{
+					"eks.amazonaws.com/role-arn": "arn:aws:iam::123456789:role/the-grid-uploader",
+				},
+			}
+			cw := newCronWorkflow()
+			fake := &fakeWorkflowBuilder{cronWorkflowResult: cw}
+			r := buildReconciler(fake, st)
+
+			_, err := r.Reconcile(context.Background(), reconcileRequest())
+			Expect(err).NotTo(HaveOccurred())
+
+			cm := &corev1.ConfigMap{}
+			err = r.Client.Get(context.Background(), types.NamespacedName{
+				Name:      testName + "-artifact-repository",
+				Namespace: testNamespace,
+			}, cm)
+			Expect(err).NotTo(HaveOccurred())
+
+			data := cm.Data["default"]
+			Expect(data).To(ContainSubstring("useSDKCreds: true"))
+			Expect(data).NotTo(ContainSubstring("accessKeySecret"))
+			Expect(data).NotTo(ContainSubstring("secretKeySecret"))
+		})
+
+		It("merges ServiceAccountAnnotations onto the created ServiceAccount", func() {
+			st := newSyntheticTest()
+			roleArn := "arn:aws:iam::123456789:role/the-grid-uploader"
+			st.Spec.ArtifactStorage = &gridv1alpha1.ArtifactStorageSpec{
+				Enabled: true,
+				Bucket:  "iam-bucket",
+				ServiceAccountAnnotations: map[string]string{
+					"eks.amazonaws.com/role-arn": roleArn,
+				},
+			}
+			cw := newCronWorkflow()
+			fake := &fakeWorkflowBuilder{cronWorkflowResult: cw}
+			r := buildReconciler(fake, st)
+
+			_, err := r.Reconcile(context.Background(), reconcileRequest())
+			Expect(err).NotTo(HaveOccurred())
+
+			svcAcct := &corev1.ServiceAccount{}
+			err = r.Client.Get(context.Background(), types.NamespacedName{
+				Name:      sa,
+				Namespace: testNamespace,
+			}, svcAcct)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(svcAcct.Annotations).To(HaveKeyWithValue("eks.amazonaws.com/role-arn", roleArn))
 		})
 	})
 })

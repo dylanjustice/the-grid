@@ -114,5 +114,46 @@ var _ = Describe("DefaultWorkflowBuilder", func() {
 			_, err := builder.BuildCronWorkflow(context.Background(), test)
 			Expect(err).To(HaveOccurred())
 		})
+
+		Context("artifact storage", func() {
+			It("sets ArtifactRepositoryRef when artifact storage is enabled", func() {
+				test.Spec.ArtifactStorage = &gridv1alpha1.ArtifactStorageSpec{
+					Enabled: true,
+					Bucket:  "my-bucket",
+				}
+				cw, err := builder.BuildCronWorkflow(context.Background(), test)
+				Expect(err).NotTo(HaveOccurred())
+				ref := cw.Spec.WorkflowSpec.ArtifactRepositoryRef
+				Expect(ref).NotTo(BeNil())
+				Expect(ref.ConfigMap).To(Equal(test.Name + "-artifact-repository"))
+				Expect(ref.Key).To(Equal("default"))
+			})
+
+			It("declares the playwright-report output artifact when enabled", func() {
+				test.Spec.ArtifactStorage = &gridv1alpha1.ArtifactStorageSpec{
+					Enabled: true,
+					Bucket:  "my-bucket",
+				}
+				cw, err := builder.BuildCronWorkflow(context.Background(), test)
+				Expect(err).NotTo(HaveOccurred())
+				tmpl := cw.Spec.WorkflowSpec.Templates[0]
+				Expect(tmpl.Outputs.Artifacts).To(HaveLen(1))
+				Expect(tmpl.Outputs.Artifacts[0].Name).To(Equal("playwright-report"))
+				Expect(tmpl.Outputs.Artifacts[0].Path).To(Equal("/app/playwright-report"))
+			})
+
+			It("leaves ArtifactRepositoryRef nil when artifact storage is disabled", func() {
+				cw, err := builder.BuildCronWorkflow(context.Background(), test)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(cw.Spec.WorkflowSpec.ArtifactRepositoryRef).To(BeNil())
+			})
+
+			It("leaves ArtifactRepositoryRef nil when ArtifactStorage spec is nil", func() {
+				test.Spec.ArtifactStorage = nil
+				cw, err := builder.BuildCronWorkflow(context.Background(), test)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(cw.Spec.WorkflowSpec.ArtifactRepositoryRef).To(BeNil())
+			})
+		})
 	})
 })

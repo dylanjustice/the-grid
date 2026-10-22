@@ -40,8 +40,41 @@ spec:
             properties:
               artifactStorage:
                 properties:
+                  bucket:
+                    description: Bucket is the object storage bucket name. Required
+                      when Enabled is true.
+                    type: string
+                  credentialsSecret:
+                    description: |-
+                      CredentialsSecret names a Secret in the same namespace containing keys
+                      "accessKey" and "secretKey" for static credential authentication.
+                      The operator does not create this Secret; it must already exist.
+                    type: string
                   enabled:
+                    description: Enabled is the feature gate. When false all other
+                      fields are ignored.
                     type: boolean
+                  endpoint:
+                    description: |-
+                      Endpoint is the S3-compatible API endpoint URL.
+                      Leave empty to use the AWS S3 default endpoint.
+                      Set for MinIO (e.g. "http://minio.minio-ns.svc:9000") or GCS S3 interop
+                      (e.g. "https://storage.googleapis.com").
+                    type: string
+                  region:
+                    description: Region is the storage region (e.g. "us-east-2").
+                      Optional for MinIO.
+                    type: string
+                  serviceAccountAnnotations:
+                    additionalProperties:
+                      type: string
+                    description: |-
+                      ServiceAccountAnnotations are merged onto the workflow ServiceAccount.
+                      Use {"eks.amazonaws.com/role-arn": "<arn>"} for AWS IRSA.
+                      Use {"iam.gke.io/gcp-service-account": "<email>"} for GKE Workload Identity.
+                      When non-empty the artifact repository uses ambient SDK credentials
+                      (useSDKCreds: true); CredentialsSecret is ignored.
+                    type: object
                 required:
                 - enabled
                 type: object

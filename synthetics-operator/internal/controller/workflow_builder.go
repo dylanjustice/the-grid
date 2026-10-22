@@ -108,7 +108,8 @@ func (b *DefaultWorkflowBuilder) buildWorkflowSpec(test *gridv1alpha1.SyntheticT
 		Container: &container,
 	}
 
-	if test.Spec.ArtifactStorage != nil && test.Spec.ArtifactStorage.Enabled {
+	artifactStorageEnabled := test.Spec.ArtifactStorage != nil && test.Spec.ArtifactStorage.Enabled
+	if artifactStorageEnabled {
 		template.Outputs = wfv1.Outputs{
 			Artifacts: wfv1.Artifacts{
 				{
@@ -135,6 +136,13 @@ func (b *DefaultWorkflowBuilder) buildWorkflowSpec(test *gridv1alpha1.SyntheticT
 				},
 			},
 		},
+	}
+
+	if artifactStorageEnabled {
+		workflowSpec.ArtifactRepositoryRef = &wfv1.ArtifactRepositoryRef{
+			ConfigMap: test.Name + "-artifact-repository",
+			Key:       "default",
+		}
 	}
 
 	return workflowSpec

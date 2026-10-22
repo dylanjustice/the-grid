@@ -26,7 +26,37 @@ type SyntheticTestSource struct {
 }
 
 type ArtifactStorageSpec struct {
+	// Enabled is the feature gate. When false all other fields are ignored.
 	Enabled bool `json:"enabled"`
+
+	// Bucket is the object storage bucket name. Required when Enabled is true.
+	// +kubebuilder:validation:Optional
+	Bucket string `json:"bucket,omitempty"`
+
+	// Endpoint is the S3-compatible API endpoint URL.
+	// Leave empty to use the AWS S3 default endpoint.
+	// Set for MinIO (e.g. "http://minio.minio-ns.svc:9000") or GCS S3 interop
+	// (e.g. "https://storage.googleapis.com").
+	// +kubebuilder:validation:Optional
+	Endpoint string `json:"endpoint,omitempty"`
+
+	// Region is the storage region (e.g. "us-east-2"). Optional for MinIO.
+	// +kubebuilder:validation:Optional
+	Region string `json:"region,omitempty"`
+
+	// CredentialsSecret names a Secret in the same namespace containing keys
+	// "accessKey" and "secretKey" for static credential authentication.
+	// The operator does not create this Secret; it must already exist.
+	// +kubebuilder:validation:Optional
+	CredentialsSecret string `json:"credentialsSecret,omitempty"`
+
+	// ServiceAccountAnnotations are merged onto the workflow ServiceAccount.
+	// Use {"eks.amazonaws.com/role-arn": "<arn>"} for AWS IRSA.
+	// Use {"iam.gke.io/gcp-service-account": "<email>"} for GKE Workload Identity.
+	// When non-empty the artifact repository uses ambient SDK credentials
+	// (useSDKCreds: true); CredentialsSecret is ignored.
+	// +kubebuilder:validation:Optional
+	ServiceAccountAnnotations map[string]string `json:"serviceAccountAnnotations,omitempty"`
 }
 
 type SyntheticTestSpec struct {

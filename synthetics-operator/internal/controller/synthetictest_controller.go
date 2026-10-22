@@ -25,6 +25,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	sigsyaml "sigs.k8s.io/yaml"
+
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -52,7 +54,7 @@ type SyntheticTestReconciler struct {
 // +kubebuilder:rbac:groups=argoproj.io,resources=workflowtaskresults,verbs=create;patch
 
 func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = logf.FromContext(ctx)
+	log := logf.FromContext(ctx)
 
 	syntheticTest := &gridv1alpha1.SyntheticTest{}
 	if err := r.Get(ctx, req.NamespacedName, syntheticTest); err != nil {
@@ -83,11 +85,22 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			Namespace: syntheticTest.Namespace,
 		},
 	}
-
 	if err := ctrl.SetControllerReference(syntheticTest, serviceAccount, r.Scheme); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err := r.Create(ctx, serviceAccount); err != nil && !errors.IsAlreadyExists(err) {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, serviceAccount, func() error {
+		if syntheticTest.Spec.ArtifactStorage != nil &&
+			syntheticTest.Spec.ArtifactStorage.Enabled &&
+			len(syntheticTest.Spec.ArtifactStorage.ServiceAccountAnnotations) > 0 {
+			if serviceAccount.Annotations == nil {
+				serviceAccount.Annotations = make(map[string]string)
+			}
+			for k, v := range syntheticTest.Spec.ArtifactStorage.ServiceAccountAnnotations {
+				serviceAccount.Annotations[k] = v
+			}
+		}
+		return ctrl.SetControllerReference(syntheticTest, serviceAccount, r.Scheme)
+	}); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -159,7 +172,91 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, err
 	}
 
+	if err := r.reconcileArtifactRepository(ctx, syntheticTest); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	_ = log
 	return ctrl.Result{}, nil
+}
+
+// artifactRepoS3 is the schema for the s3 section of an Argo artifact repository ConfigMap entry.
+type artifactRepoS3 struct {
+	Bucket          string         `json:"bucket"`
+	Endpoint        string         `json:"endpoint,omitempty"`
+	Region          string         `json:"region,omitempty"`
+	UseSDKCreds     bool           `json:"useSDKCreds,omitempty"`
+	AccessKeySecret *secretKeyRef  `json:"accessKeySecret,omitempty"`
+	SecretKeySecret *secretKeyRef  `json:"secretKeySecret,omitempty"`
+	KeyFormat       string         `json:"keyFormat"`
+}
+
+type secretKeyRef struct {
+	Name string `json:"name"`
+	Key  string `json:"key"`
+}
+
+type artifactRepoConfig struct {
+	S3 artifactRepoS3 `json:"s3"`
+}
+
+func (r *SyntheticTestReconciler) reconcileArtifactRepository(ctx context.Context, test *gridv1alpha1.SyntheticTest) error {
+	log := logf.FromContext(ctx)
+	storage := test.Spec.ArtifactStorage
+	if storage == nil || !storage.Enabled {
+		return nil
+	}
+	if storage.Bucket == "" {
+		log.Info("artifactStorage.bucket is required when enabled; skipping artifact repository reconciliation", "test", test.Name)
+		return nil
+	}
+
+	yamlContent, err := buildArtifactRepositoryYAML(storage)
+	if err != nil {
+		return err
+	}
+
+	cm := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      test.Name + "-artifact-repository",
+			Namespace: test.Namespace,
+		},
+	}
+	if err := ctrl.SetControllerReference(test, cm, r.Scheme); err != nil {
+		return err
+	}
+	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, cm, func() error {
+		cm.Data = map[string]string{
+			"default": yamlContent,
+		}
+		return ctrl.SetControllerReference(test, cm, r.Scheme)
+	})
+	return err
+}
+
+func buildArtifactRepositoryYAML(storage *gridv1alpha1.ArtifactStorageSpec) (string, error) {
+	const keyFormat = `{{workflow.labels["the-grid.io/synthetic-test"]}}/{{workflow.name}}/playwright-report`
+
+	s3 := artifactRepoS3{
+		Bucket:    storage.Bucket,
+		Endpoint:  storage.Endpoint,
+		Region:    storage.Region,
+		KeyFormat: keyFormat,
+	}
+
+	// IAM delegation takes precedence over static credentials.
+	if len(storage.ServiceAccountAnnotations) > 0 {
+		s3.UseSDKCreds = true
+	} else if storage.CredentialsSecret != "" {
+		s3.AccessKeySecret = &secretKeyRef{Name: storage.CredentialsSecret, Key: "accessKey"}
+		s3.SecretKeySecret = &secretKeyRef{Name: storage.CredentialsSecret, Key: "secretKey"}
+	}
+
+	bytes, err := sigsyaml.Marshal(artifactRepoConfig{S3: s3})
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
 }
 
 func (r *SyntheticTestReconciler) SetupWithManager(mgr ctrl.Manager) error {

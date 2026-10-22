@@ -21,6 +21,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -29,6 +30,66 @@ import (
 
 	gridv1alpha1 "github.com/dylanjustice/the-grid/synthetics-operator/api/v1alpha1"
 )
+
+// makeWorkflowWithS3Artifact builds a minimal Workflow with a playwright-report S3 artifact
+// at the given bucket/key — used to verify artifactURL extraction without envtest.
+func makeWorkflowWithS3Artifact(name, bucket, key string) *wfv1.Workflow {
+	return &wfv1.Workflow{
+		ObjectMeta: metav1.ObjectMeta{Name: name},
+		Status: wfv1.WorkflowStatus{
+			Nodes: wfv1.Nodes{
+				name: wfv1.NodeStatus{
+					Outputs: &wfv1.Outputs{
+						Artifacts: wfv1.Artifacts{
+							{
+								Name: "playwright-report",
+								ArtifactLocation: wfv1.ArtifactLocation{
+									S3: &wfv1.S3Artifact{
+										S3Bucket: wfv1.S3Bucket{Bucket: bucket},
+										Key:      key,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+var _ = Describe("artifactURL", func() {
+	It("extracts s3:// URL from a workflow with an S3 artifact", func() {
+		wf := makeWorkflowWithS3Artifact("run-abc123", "my-bucket", "httbin-synthetic/run-abc123/playwright-report")
+		Expect(artifactURL(wf)).To(Equal("s3://my-bucket/httbin-synthetic/run-abc123/playwright-report"))
+	})
+
+	It("returns empty string when no playwright-report artifact exists", func() {
+		wf := &wfv1.Workflow{
+			ObjectMeta: metav1.ObjectMeta{Name: "run-xyz"},
+			Status:     wfv1.WorkflowStatus{},
+		}
+		Expect(artifactURL(wf)).To(BeEmpty())
+	})
+
+	It("produces unique URLs for two runs of the same test", func() {
+		wf1 := makeWorkflowWithS3Artifact(
+			"httbin-synthetic-aaa111",
+			"my-bucket",
+			"httbin-synthetic/httbin-synthetic-aaa111/playwright-report",
+		)
+		wf2 := makeWorkflowWithS3Artifact(
+			"httbin-synthetic-bbb222",
+			"my-bucket",
+			"httbin-synthetic/httbin-synthetic-bbb222/playwright-report",
+		)
+		url1 := artifactURL(wf1)
+		url2 := artifactURL(wf2)
+		Expect(url1).NotTo(BeEmpty())
+		Expect(url2).NotTo(BeEmpty())
+		Expect(url1).NotTo(Equal(url2))
+	})
+})
 
 var _ = Describe("SyntheticTestRun Controller", func() {
 	Context("When reconciling a resource", func() {

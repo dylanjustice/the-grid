@@ -19,6 +19,23 @@ spec:
         value: "production"
       - name: GRID_JOB_NAME
         value: "httpbin-synthetic"
+  artifactStorage:
+    enabled: false
+    # Set enabled: true and fill in the fields below to enable artifact uploads.
+    # See specs/003-artifact-storage/quickstart.md for full setup instructions.
+    #
+    # MinIO example (dev cluster):
+    #   enabled: true
+    #   bucket: the-grid-artifacts
+    #   endpoint: "http://minio.minio.svc:9000"
+    #   credentialsSecret: artifact-credentials
+    #
+    # AWS S3 with IRSA example:
+    #   enabled: true
+    #   bucket: your-artifact-bucket
+    #   region: us-east-2
+    #   serviceAccountAnnotations:
+    #     eks.amazonaws.com/role-arn: "arn:aws:iam::123456789012:role/the-grid-artifact-uploader"
   source:
     inline: |
       import { test, expect } from "@playwright/test";
