@@ -30,7 +30,7 @@ spec:
       import { test, expect } from "@playwright/test";
 
       test.beforeEach(async ({ page }) => {
-        await page.goto("https://httpbin.org", { waitUntil: "networkidle" });
+        await page.goto("http://httpbin.the-grid-synthetics.svc.cluster.local", { waitUntil: "networkidle" });
       });
 
       test("HTTP Methods", async ({ page }) => {

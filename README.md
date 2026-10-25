@@ -1,6 +1,6 @@
 # The Grid
 
-Synthetic reality, real lessons.
+Test, measure and operationalize critical user paths with tools you're already using.
 
 ## Requirements
 
@@ -19,7 +19,7 @@ Synthetic reality, real lessons.
 
 ### Optional Tools
 
-- **Playwright** - For end-to-end testing and synthetic monitoring
+- **Playwright** - For local end-to-end testing and synthetic monitoring
 - **Make** - For running common tasks via Makefile
 
 ## Installation & Setup

@@ -69,9 +69,9 @@ test("homepage loads", async ({ page }) => {
 // ^^ automatic step timing, histogram push, standardized labels
 ```
 
-- Wrap Playwright's `test` fixture to auto-instrument `test.step()` calls with a Prometheus Histogram
+- Use a playwright reporter. to wrap Playwright's `test` fixture to auto-instrument `test.step()` calls with a Prometheus Histogram
 - Standardize labels: `test_suite`, `step_name`, `status`, `environment`
-- Push to Pushgateway in `afterEach` via `PUSHGATEWAY_URL` env var
+- Push to prometheus compatible gateway in `afterEach` via `PUSHGATEWAY_URL` env var
 - Published to npm as `@the-grid/synthetics`
 
 **Why first:** Prerequisite for everything else. Standardized metrics unlock Grafana dashboards.
