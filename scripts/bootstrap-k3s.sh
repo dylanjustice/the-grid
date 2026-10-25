@@ -7,3 +7,4 @@ helm upgrade argocd argo/argo-cd --install --namespace argocd --create-namespace
 helm upgrade prometheus prometheus-community/prometheus --install --namespace the-grid-monitoring --create-namespace --values gitops/workloads/kube-prometheus/values.yaml
 kubectl apply -f gitops/applications/argo-workflows.yaml
 kubectl apply -f gitops/applications/playwright-synthetics.yaml
+kubectl apply -f gitops/applications/httpbin.yaml
