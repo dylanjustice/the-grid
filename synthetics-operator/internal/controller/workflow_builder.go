@@ -19,6 +19,13 @@ const (
 
 var defaultCommand = []string{"npx", "playwright", "test"}
 
+func serviceAccountName(test *gridv1alpha1.SyntheticTest) string {
+	if test.Spec.ServiceAccountName != nil && *test.Spec.ServiceAccountName != "" {
+		return *test.Spec.ServiceAccountName
+	}
+	return test.Name
+}
+
 // WorkflowBuilder inflates a SyntheticTest into Argo workflow objects.
 // Implementations must be safe to call concurrently on the same instance.
 type WorkflowBuilder interface {
@@ -30,9 +37,6 @@ type WorkflowBuilder interface {
 type DefaultWorkflowBuilder struct{}
 
 func (b *DefaultWorkflowBuilder) BuildCronWorkflow(_ context.Context, test *gridv1alpha1.SyntheticTest) (*wfv1.CronWorkflow, error) {
-	if test.Spec.ServiceAccountName == nil {
-		return nil, fmt.Errorf("SyntheticTest %s/%s: spec.serviceAccountName is required", test.Namespace, test.Name)
-	}
 	if test.Spec.Source.Inline == "" {
 		return nil, fmt.Errorf("SyntheticTest %s/%s: spec.source.inline is required", test.Namespace, test.Name)
 	}
@@ -63,9 +67,6 @@ func (b *DefaultWorkflowBuilder) BuildCronWorkflow(_ context.Context, test *grid
 }
 
 func (b *DefaultWorkflowBuilder) BuildWorkflow(_ context.Context, test *gridv1alpha1.SyntheticTest) (*wfv1.Workflow, error) {
-	if test.Spec.ServiceAccountName == nil {
-		return nil, fmt.Errorf("SyntheticTest %s/%s: spec.serviceAccountName is required", test.Namespace, test.Name)
-	}
 	if test.Spec.Source.Inline == "" {
 		return nil, fmt.Errorf("SyntheticTest %s/%s: spec.source.inline is required", test.Namespace, test.Name)
 	}
@@ -121,7 +122,7 @@ func (b *DefaultWorkflowBuilder) buildWorkflowSpec(test *gridv1alpha1.SyntheticT
 	}
 
 	workflowSpec := wfv1.WorkflowSpec{
-		ServiceAccountName: *test.Spec.ServiceAccountName,
+		ServiceAccountName: serviceAccountName(test),
 		Entrypoint:         test.Spec.Entrypoint,
 		Templates:          []wfv1.Template{template},
 		Volumes: []corev1.Volume{

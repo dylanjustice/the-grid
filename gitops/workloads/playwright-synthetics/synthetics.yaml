@@ -2,13 +2,10 @@ apiVersion: thegrid.io/v1alpha1
 kind: SyntheticTest
 metadata:
   labels:
-    app.kubernetes.io/name: synthetics-operator
-    app.kubernetes.io/managed-by: kustomize
   name: httbin-synthetic
   namespace: the-grid-synthetics
 spec:
   schedule: "*/5 * * * *"
-  serviceAccountName: httpbin-synthetic-sa
   entrypoint: run
   container:
     name: playwright
@@ -82,13 +79,10 @@ apiVersion: thegrid.io/v1alpha1
 kind: SyntheticTest
 metadata:
   labels:
-    app.kubernetes.io/name: synthetics-operator
-    app.kubernetes.io/managed-by: kustomize
   name: httbin-synthetic-failure
   namespace: the-grid-synthetics
 spec:
   schedule: "*/5 * * * *"
-  serviceAccountName: httpbin-synthetic-sa
   entrypoint: run
   container:
     name: playwright

@@ -50,7 +50,13 @@ var _ = Describe("SyntheticTest Controller", func() {
 						Name:      resourceName,
 						Namespace: "default",
 					},
-					// TODO(user): Specify other spec details if needed.
+					Spec: gridv1alpha1.SyntheticTestSpec{
+						Schedule:   "*/5 * * * *",
+						Entrypoint: "run",
+						Source: gridv1alpha1.SyntheticTestSource{
+							Inline: "import { test } from '@playwright/test'; test('noop', () => {});",
+						},
+					},
 				}
 				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 			}
@@ -68,8 +74,9 @@ var _ = Describe("SyntheticTest Controller", func() {
 		It("should successfully reconcile the resource", func() {
 			By("Reconciling the created resource")
 			controllerReconciler := &SyntheticTestReconciler{
-				Client: k8sClient,
-				Scheme: k8sClient.Scheme(),
+				Client:          k8sClient,
+				Scheme:          k8sClient.Scheme(),
+				WorkflowBuilder: &DefaultWorkflowBuilder{},
 			}
 
 			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{

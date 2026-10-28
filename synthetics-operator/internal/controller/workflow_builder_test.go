@@ -109,10 +109,11 @@ var _ = Describe("DefaultWorkflowBuilder", func() {
 			Expect(err).To(HaveOccurred())
 		})
 
-		It("returns an error when service account name is nil", func() {
+		It("defaults service account name to the SyntheticTest name when nil", func() {
 			test.Spec.ServiceAccountName = nil
-			_, err := builder.BuildCronWorkflow(context.Background(), test)
-			Expect(err).To(HaveOccurred())
+			cw, err := builder.BuildCronWorkflow(context.Background(), test)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(cw.Spec.WorkflowSpec.ServiceAccountName).To(Equal(test.Name))
 		})
 
 		Context("artifact storage", func() {

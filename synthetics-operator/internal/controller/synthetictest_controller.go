@@ -79,9 +79,13 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, err
 	}
 
+	saName := syntheticTest.Name
+	if syntheticTest.Spec.ServiceAccountName != nil && *syntheticTest.Spec.ServiceAccountName != "" {
+		saName = *syntheticTest.Spec.ServiceAccountName
+	}
 	serviceAccount := &v1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      *syntheticTest.Spec.ServiceAccountName,
+			Name:      saName,
 			Namespace: syntheticTest.Namespace,
 		},
 	}
@@ -138,7 +142,7 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		Subjects: []rbacv1.Subject{
 			{
 				Kind:      "ServiceAccount",
-				Name:      *syntheticTest.Spec.ServiceAccountName,
+				Name:      saName,
 				Namespace: syntheticTest.Namespace,
 			},
 		},
