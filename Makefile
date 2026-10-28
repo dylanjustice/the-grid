@@ -1,4 +1,4 @@
-.PHONY: help docker-login docker-build terraform-init terraform-plan terraform-apply terraform-destroy argo-ui argo-sync k3s-destroy k3s-start test pushgateway-start pushgateway-stop test-reporter
+.PHONY: help docker-login docker-build terraform-init terraform-plan terraform-apply terraform-destroy argo-ui argo-sync k3s-destroy k3s-start test pushgateway-start pushgateway-stop test-reporter httpbin-ui
 
 # Variables
 AWS_ACCOUNT ?= $(shell aws sts get-caller-identity --query Account --output text)
@@ -38,6 +38,7 @@ help:
 	@echo "  tunnel-stop           - Stop all SSM tunnels"
 	@echo "  argo-ui               - Port-forward Argo Workflows UI to https://localhost:2746"
 	@echo "  prometheus-ui         - Port-forward Prometheus UI to https://localhost:9090"
+	@echo "  httpbin-ui            - Port-forward httpbin UI to http://localhost:8080"
 	@echo "  argo-sync             - Force ArgoCD sync on all applications"
 	@echo "  k3s-destroy           - Destroy only the k3s instance to save cost"
 	@echo "  k3s-start             - Recreate the k3s instance"
@@ -153,6 +154,10 @@ argo-ui:
 prometheus-ui:
 	@echo "Port-forwarding Prometheus UI to http://localhost:9090..."
 	kubectl port-forward svc/prometheus-server -n the-grid-monitoring 9090:80
+
+httpbin-ui:
+	@echo "Port-forwarding httpbin to http://localhost:8080..."
+	kubectl port-forward svc/httpbin -n the-grid-synthetics 8080:80
 
 ARGOCD_APPS := argo-workflows playwright-synthetics
 
