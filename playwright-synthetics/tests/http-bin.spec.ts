@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("http://httpbin.the-grid-synthetics.svc.cluster.local", { waitUntil: "networkidle" });
+  await page.goto("http://localhost:8080", { waitUntil: "networkidle" });
 });
 
 test("HTTP Methods", async ({ page }) => {

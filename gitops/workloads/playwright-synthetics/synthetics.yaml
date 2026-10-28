@@ -77,3 +77,41 @@ spec:
           await expect(op.locator("td.response-col_status:not(.col_header)").first()).toHaveText("200");
         });
       });
+---
+apiVersion: thegrid.io/v1alpha1
+kind: SyntheticTest
+metadata:
+  labels:
+    app.kubernetes.io/name: synthetics-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: httbin-synthetic-failure
+  namespace: the-grid-synthetics
+spec:
+  schedule: "*/5 * * * *"
+  serviceAccountName: httpbin-synthetic-sa
+  entrypoint: run
+  container:
+    name: playwright
+    env:
+      - name: PUSHGATEWAY_URL
+        value: "http://playwright-synthetics-prometheus-pushgateway.the-grid-synthetics.svc.cluster.local:9091"
+      - name: GRID_ENV
+        value: "production"
+      - name: GRID_JOB_NAME
+        value: "httpbin-synthetic-failure"
+  artifactStorage:
+    enabled: true
+    bucket: 393657359434-us-east-2-artifacts
+    endpoint: s3.amazonaws.com
+    region: us-east-2
+    useSDKCreds: true
+  source:
+    inline: |
+      import { test, expect } from "@playwright/test";
+
+      test("intentional failure - screenshot capture check", async ({ page }) => {
+        await page.goto("http://localhost:8080");
+        await expect(page.locator("h1")).toHaveText("this text will never match");
+      });
+
+---
