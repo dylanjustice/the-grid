@@ -46,11 +46,39 @@ sed -i '' 's/127.0.0.1/localhost/' kubeconfig.yaml 2>/dev/null || \
 sed -i 's/127.0.0.1/localhost/' kubeconfig.yaml
 
 
-CLUSTER_SERVER=$(kubectl --kubeconfig kubeconfig.yaml config view --raw -o jsonpath='{.clusters[0].cluster.server}')
 CLUSTER_CA=$(kubectl --kubeconfig kubeconfig.yaml config view --raw -o jsonpath='{.clusters[0].cluster.certificate-authority-data}')
 CLIENT_CERT=$(kubectl --kubeconfig kubeconfig.yaml config view --raw -o jsonpath='{.users[0].user.client-certificate-data}')
 CLIENT_KEY=$(kubectl --kubeconfig kubeconfig.yaml config view --raw -o jsonpath='{.users[0].user.client-key-data}')
-CLUSTER_SERVER="https://localhost:6443"
+
+# Prefer Tailscale hostname so kubectl works without an SSM tunnel.
+# Falls back to localhost:6443 (requires make tunnel-start) if Tailscale is not active.
+echo "Detecting Tailscale hostname..."
+TS_CMD_ID=$(aws ssm send-command \
+  --region "$REGION" \
+  --instance-ids "$INSTANCE_ID" \
+  --document-name "AWS-RunShellScript" \
+  --parameters 'commands=["tailscale status --json 2>/dev/null | python3 -c \"import json,sys; d=json.load(sys.stdin); print(d['\''Self'\'']['\''DNSName'\''].rstrip('\''.'\''))\" 2>/dev/null || echo \"\""]' \
+  --query "Command.CommandId" \
+  --output text 2>/dev/null || echo "")
+
+TS_HOSTNAME=""
+if [ -n "$TS_CMD_ID" ]; then
+  sleep 5
+  TS_HOSTNAME=$(aws ssm get-command-invocation \
+    --region "$REGION" \
+    --command-id "$TS_CMD_ID" \
+    --instance-id "$INSTANCE_ID" \
+    --query "StandardOutputContent" \
+    --output text 2>/dev/null | tr -d '[:space:]' || echo "")
+fi
+
+if [ -n "$TS_HOSTNAME" ] && [[ "$TS_HOSTNAME" == *.ts.net ]]; then
+  CLUSTER_SERVER="https://${TS_HOSTNAME}:6443"
+  echo "Using Tailscale hostname: $TS_HOSTNAME"
+else
+  CLUSTER_SERVER="https://localhost:6443"
+  echo "Tailscale not detected — using localhost:6443 (requires make tunnel-start)"
+fi
 
 GRID_DIR="$HOME/.kube/the-grid"
 mkdir -p "$GRID_DIR"

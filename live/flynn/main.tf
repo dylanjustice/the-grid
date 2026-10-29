@@ -28,6 +28,10 @@ module "k3s" {
   vpc_id     = module.alpha_vpc.vpc_id
   region     = var.region
   account_id = data.aws_caller_identity.current.account_id
+
+  tailscale_enabled          = var.tailscale_enabled
+  tailscale_auth_key         = var.tailscale_auth_key
+  tailscale_advertise_routes = var.vpc_cidr
 }
 
 resource "aws_security_group" "vpc_endpoints" {

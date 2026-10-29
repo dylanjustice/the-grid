@@ -1,4 +1,4 @@
-.PHONY: help docker-login docker-build terraform-init terraform-plan terraform-apply terraform-destroy argo-ui argo-sync k3s-destroy k3s-start test pushgateway-start pushgateway-stop test-reporter httpbin-ui
+.PHONY: help docker-login docker-build terraform-init terraform-plan terraform-apply terraform-destroy argo-ui argo-sync k3s-destroy k3s-start test pushgateway-start pushgateway-stop test-reporter httpbin-ui tailscale-serve-setup
 
 # Variables
 AWS_ACCOUNT ?= $(shell aws sts get-caller-identity --query Account --output text)
@@ -33,12 +33,13 @@ help:
 	@echo "  live-apply            - Terraform apply in live/flynn/"
 	@echo "  live-destroy          - Terraform destroy in live/flynn/"
 	@echo "  connect               - Connect to k3s instance via SSM Session Manager"
-	@echo "  get-kubeconfig        - Retrieve kubeconfig for k3s cluster"
-	@echo "  tunnel-start          - Start SSM port forwarding to k3s API"
-	@echo "  tunnel-stop           - Stop all SSM tunnels"
-	@echo "  argo-ui               - Port-forward Argo Workflows UI to https://localhost:2746"
-	@echo "  prometheus-ui         - Port-forward Prometheus UI to https://localhost:9090"
-	@echo "  httpbin-ui            - Port-forward httpbin UI to http://localhost:8080"
+	@echo "  get-kubeconfig        - Retrieve kubeconfig for k3s cluster (uses Tailscale if available)"
+	@echo "  tailscale-serve-setup - Configure Tailscale Serve for platform UIs (run once after bootstrap)"
+	@echo "  tunnel-start          - (fallback) Start SSM port forwarding to k3s API"
+	@echo "  tunnel-stop           - (fallback) Stop all SSM tunnels"
+	@echo "  argo-ui               - (fallback) Port-forward Argo Workflows UI to https://localhost:2746"
+	@echo "  prometheus-ui         - (fallback) Port-forward Prometheus UI to https://localhost:9090"
+	@echo "  httpbin-ui            - (fallback) Port-forward httpbin UI to http://localhost:8080"
 	@echo "  argo-sync             - Force ArgoCD sync on all applications"
 	@echo "  k3s-destroy           - Destroy only the k3s instance to save cost"
 	@echo "  k3s-start             - Recreate the k3s instance"
@@ -174,6 +175,10 @@ k3s-destroy: live-init
 
 k3s-bootstrap:
 	sh ./scripts/bootstrap-k3s.sh
+
+tailscale-serve-setup:
+	@echo "Configuring Tailscale Serve on the k3s instance..."
+	./scripts/tailscale-serve-setup.sh
 
 # Playwright targets
 test:

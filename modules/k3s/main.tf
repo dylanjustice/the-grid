@@ -33,8 +33,26 @@ resource "random_string" "suffix" {
   special = false
 }
 
+resource "aws_secretsmanager_secret" "tailscale_auth_key" {
+  count                   = var.tailscale_enabled ? 1 : 0
+  name                    = "/the-grid/tailscale/auth-key"
+  description             = "Tailscale auth key for the k3s EC2 subnet router"
+  recovery_window_in_days = 0
+}
+
+resource "aws_secretsmanager_secret_version" "tailscale_auth_key" {
+  count                    = var.tailscale_enabled ? 1 : 0
+  secret_id                = aws_secretsmanager_secret.tailscale_auth_key[0].id
+  secret_string_wo         = var.tailscale_auth_key
+  secret_string_wo_version = var.tailscale_auth_key != "" ? parseint(substr(sha256(var.tailscale_auth_key), 0, 13), 16) : null
+}
+
 resource "terraform_data" "k3s_user_data" {
-  input = file("${path.module}/userdata.sh")
+  input = templatefile("${path.module}/userdata.sh", {
+    tailscale_enabled    = var.tailscale_enabled
+    tailscale_secret_arn = var.tailscale_enabled ? aws_secretsmanager_secret.tailscale_auth_key[0].arn : ""
+    tailscale_routes     = var.tailscale_advertise_routes
+  })
 }
 resource "aws_instance" "k3s" {
   ami                         = data.aws_ami.al2023_arm.id
@@ -109,4 +127,20 @@ resource "aws_iam_role_policy" "k3s_ecr_access" {
   name   = "k3s-ecr-access"
   role   = aws_iam_role.k3s.id
   policy = data.aws_iam_policy_document.k3s_ecr_access.json
+}
+
+data "aws_iam_policy_document" "k3s_tailscale_secrets" {
+  count = var.tailscale_enabled ? 1 : 0
+  statement {
+    actions   = ["secretsmanager:GetSecretValue"]
+    resources = [aws_secretsmanager_secret.tailscale_auth_key[0].arn]
+    effect    = "Allow"
+  }
+}
+
+resource "aws_iam_role_policy" "k3s_tailscale_secrets" {
+  count  = var.tailscale_enabled ? 1 : 0
+  name   = "k3s-tailscale-secrets"
+  role   = aws_iam_role.k3s.id
+  policy = data.aws_iam_policy_document.k3s_tailscale_secrets[0].json
 }
