@@ -40,7 +40,7 @@ if [ -z "$${AUTH_KEY}" ]; then
 fi
 
 # Add Tailscale RPM repository
-curl -fsSL https://pkgs.tailscale.com/stable/amazonlinux/2023/tailscale.repo \
+curl -fsSL https://pkgs.tailscale.com/stable/amazon-linux/2023/tailscale.repo \
   -o /etc/yum.repos.d/tailscale.repo
 
 # Install Tailscale and jq (jq parses tailscale status JSON)
