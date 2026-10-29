@@ -25,13 +25,6 @@ kubectl rollout status deployment -n the-grid-monitoring --timeout=300s 2>/dev/n
 echo "Waiting for synthetics to be ready..."
 kubectl rollout status deployment -n the-grid-synthetics --timeout=300s 2>/dev/null || true
 
-# Configure Tailscale Serve if Tailscale is running on the instance
-if terraform -chdir=live/flynn output -raw k3s_instance_id &>/dev/null 2>&1; then
-  if [ "${TAILSCALE_ENABLED:-false}" = "true" ]; then
-    echo "Configuring Tailscale Serve..."
-    make tailscale-serve-setup
-  else
-    echo "TAILSCALE_ENABLED is not set to true; skipping Tailscale Serve setup."
-    echo "Run 'make tailscale-serve-setup' manually after enabling Tailscale."
-  fi
-fi
+# Configure Tailscale Serve
+echo "Configuring Tailscale Serve..."
+make tailscale-serve-setup
