@@ -6,8 +6,7 @@ locals {
   azs             = ["us-east-2a"]
   az_count        = length(local.azs)
   subnet_newbits  = var.subnet_prefix - var.vpc_cidr_prefix
-  private_subnets = [for i in range(local.az_count) : cidrsubnet(var.vpc_cidr, local.subnet_newbits, i)]
-  public_subnets  = [for i in range(local.az_count) : cidrsubnet(var.vpc_cidr, local.subnet_newbits, i + local.az_count)]
+  public_subnets  = [for i in range(local.az_count) : cidrsubnet(var.vpc_cidr, local.subnet_newbits, i)]
   repositories    = toset(["flynn/playwright-synthetics", "flynn/synthetics-operator", "flynn/playwright-runner-js"])
 }
 module "alpha_vpc" {
@@ -16,15 +15,13 @@ module "alpha_vpc" {
   name               = "thegrid-alpha"
   cidr               = var.vpc_cidr
   azs                = local.azs
-  private_subnets    = local.private_subnets
   public_subnets     = local.public_subnets
-  enable_nat_gateway = true
-  single_nat_gateway = true
+  enable_nat_gateway = false
 }
 
 module "k3s" {
   source     = "../../modules/k3s"
-  subnet_id  = module.alpha_vpc.private_subnets[0]
+  subnet_id  = module.alpha_vpc.public_subnets[0]
   vpc_id     = module.alpha_vpc.vpc_id
   region     = var.region
   account_id = data.aws_caller_identity.current.account_id
@@ -34,32 +31,6 @@ module "k3s" {
   tailscale_advertise_routes = var.vpc_cidr
 }
 
-resource "aws_security_group" "vpc_endpoints" {
-  name   = "vpc-endpoints-sg"
-  vpc_id = module.alpha_vpc.vpc_id
-
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr]
-  }
-}
-
-resource "aws_vpc_endpoint" "ssm" {
-  for_each = toset([
-    "com.amazonaws.${var.region}.ssm",
-    "com.amazonaws.${var.region}.ssmmessages",
-    "com.amazonaws.${var.region}.ec2messages",
-  ])
-
-  vpc_id              = module.alpha_vpc.vpc_id
-  service_name        = each.value
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = module.alpha_vpc.private_subnets
-  security_group_ids  = [aws_security_group.vpc_endpoints.id]
-  private_dns_enabled = true
-}
 
 module "ecr" {
   for_each        = local.repositories

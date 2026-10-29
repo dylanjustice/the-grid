@@ -27,6 +27,15 @@ resource "aws_security_group_rule" "k3s_egress" {
   security_group_id = aws_security_group.k3s.id
 }
 
+resource "aws_security_group_rule" "k3s_tailscale" {
+  type              = "ingress"
+  from_port         = 41641
+  to_port           = 41641
+  protocol          = "udp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.k3s.id
+}
+
 resource "random_string" "suffix" {
   length  = 6
   upper   = false
@@ -59,7 +68,7 @@ resource "aws_instance" "k3s" {
   instance_type               = "t4g.medium"
   subnet_id                   = var.subnet_id
   vpc_security_group_ids      = [aws_security_group.k3s.id]
-  associate_public_ip_address = false
+  associate_public_ip_address = true
 
   root_block_device {
     volume_size = 30
