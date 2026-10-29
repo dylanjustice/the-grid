@@ -47,13 +47,20 @@ resource "aws_secretsmanager_secret" "tailscale_auth_key" {
   name                    = "/the-grid/tailscale/auth-key"
   description             = "Tailscale auth key for the k3s EC2 subnet router"
   recovery_window_in_days = 0
+
+  lifecycle {
+    precondition {
+      condition     = var.tailscale_auth_key != ""
+      error_message = "tailscale_auth_key must be set when tailscale_enabled is true. Pass TF_VAR_tailscale_auth_key=<key>."
+    }
+  }
 }
 
 resource "aws_secretsmanager_secret_version" "tailscale_auth_key" {
   count                    = var.tailscale_enabled ? 1 : 0
   secret_id                = aws_secretsmanager_secret.tailscale_auth_key[0].id
   secret_string_wo         = var.tailscale_auth_key
-  secret_string_wo_version = var.tailscale_auth_key != "" ? parseint(substr(sha256(var.tailscale_auth_key), 0, 13), 16) : null
+  secret_string_wo_version = parseint(substr(sha256(var.tailscale_auth_key), 0, 13), 16)
 }
 
 resource "terraform_data" "k3s_user_data" {
