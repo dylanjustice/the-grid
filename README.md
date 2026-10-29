@@ -11,6 +11,7 @@ Test, measure and operationalize critical user paths with tools you're already u
 - **Node.js** 18+ (managed via `nvm`)
 - **kubectl** (Kubernetes CLI)
 - **ArgoCD** CLI
+- **Tailscale** - For private access to the cluster and platform UIs
 
 ### AWS Access
 
@@ -154,40 +155,54 @@ make docker-push
 ### Spinning Up The Lab
 
 ```bash
-# Start the instance
+# Provision infrastructure (EC2 instance joins the Tailnet on boot)
 make live-apply
 
-# Configure kubectl
+# Connect Tailscale on your local machine
+tailscale up
+
+# Configure kubectl (auto-detects Tailscale hostname — no tunnel needed)
 make get-kubeconfig
 
-# Open an SSM tunnel to the instance
-make tunnel-start
-
-# Start infrastructure
+# Bootstrap k3s with ArgoCD, Prometheus, and Tailscale Serve
 make k3s-bootstrap
 ```
+
+Once bootstrapped, platform UIs are available over HTTPS on your Tailnet:
+
+| Service | URL |
+|---|---|
+| ArgoCD | `https://<node>.<tailnet>.ts.net` |
+| Argo Workflows | `https://<node>.<tailnet>.ts.net:2746` |
+| Prometheus | `https://<node>.<tailnet>.ts.net:9090` |
+| httpbin | `https://<node>.<tailnet>.ts.net:8080` |
+
+Find `<node>` via `tailscale status` or the Tailscale admin console.
 
 ### Spinning Down the Lab
 
 ```bash
-# Keep everything but the k3s instance
+# Destroy only the EC2 instance (preserves VPC, ECR, S3)
 make k3s-destroy
-
-make tunnel-stop
 ```
 
 ## kubectl
 
-Run `kubectl` against the lab environment in k3s
+`kubectl` works directly over the Tailnet — no SSM tunnel required:
 
 ```bash
-# Start a tunnel session
-make tunnel-start
+# Pull a fresh kubeconfig (run once after provisioning or instance replacement)
+make get-kubeconfig
 
-# Check nodes
+# Verify cluster access
 kubectl get nodes
+```
 
-# Kill tunnels
+If Tailscale is unavailable, fall back to the SSM tunnel:
+
+```bash
+make tunnel-start   # opens port-forward to :6443
+kubectl get nodes
 make tunnel-stop
 ```
 

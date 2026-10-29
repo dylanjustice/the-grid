@@ -21,3 +21,9 @@ variable "subnet_prefix" {
   type        = number
   default     = 24
 }
+
+variable "tailscale_enabled" {
+  description = "Install Tailscale on the EC2 instance as a subnet router."
+  type        = bool
+  default     = true
+}

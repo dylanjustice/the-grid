@@ -18,3 +18,13 @@ variable "region" {
 variable "account_id" {
   type = string
 }
+
+variable "tailscale_enabled" {
+  type    = bool
+  default = false
+}
+
+variable "tailscale_advertise_routes" {
+  type    = string
+  default = ""
+}
