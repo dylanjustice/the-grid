@@ -27,10 +27,3 @@ variable "tailscale_enabled" {
   type        = bool
   default     = true
 }
-
-variable "tailscale_auth_key" {
-  description = "Tailscale auth key stored in Secrets Manager. Set via TF_VAR_tailscale_auth_key."
-  type        = string
-  sensitive   = true
-  default     = ""
-}

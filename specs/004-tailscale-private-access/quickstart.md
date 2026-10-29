@@ -18,22 +18,18 @@ Download and install from tailscale.com. Sign in to your Tailscale account. The 
 2. Check **Reusable** and set **Expiry** to "No expiry."
 3. Copy the key value (shown only once).
 
-### 3. Enable Tailscale in Terraform
+### 3. Seed the Tailscale auth key (one-time)
 
-`*.tfvars` files are gitignored. Set these env vars before running `make live-apply`:
-
-```bash
-export TF_VAR_tailscale_enabled=true
-export TF_VAR_tailscale_auth_key=tskey-auth-XXXXX
-```
-
-Terraform will create the Secrets Manager secret `/the-grid/tailscale/auth-key` and write the key value. The auth key is write-only — it is never stored in Terraform state. You only need to pass `TF_VAR_tailscale_auth_key` on the initial apply or when rotating the key; subsequent applies without it leave the secret unchanged.
-
-Also set `TAILSCALE_ENABLED=true` so `make k3s-bootstrap` automatically runs `make tailscale-serve-setup` at the end:
+Terraform creates the Secrets Manager secret container. Seed the value once with the AWS CLI — you never need to do this again unless rotating:
 
 ```bash
-export TAILSCALE_ENABLED=true
+aws secretsmanager put-secret-value \
+  --region us-east-2 \
+  --secret-id /the-grid/tailscale/auth-key \
+  --secret-string "tskey-auth-XXXXX"
 ```
+
+To rotate the key, repeat this command with the new key value.
 
 ---
 

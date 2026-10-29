@@ -27,8 +27,7 @@ module "k3s" {
   account_id = data.aws_caller_identity.current.account_id
 
   tailscale_enabled          = var.tailscale_enabled
-  tailscale_auth_key         = var.tailscale_auth_key
-  tailscale_advertise_routes = var.vpc_cidr
+tailscale_advertise_routes = var.vpc_cidr
 }
 
 
