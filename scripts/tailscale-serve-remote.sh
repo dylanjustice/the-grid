@@ -26,7 +26,7 @@ echo "  httpbin:                ${HTTPBIN_IP:-NOT FOUND}"
 configure_serve() {
   local label=$1 port=$2 target=$3
   if [ -n "$target" ]; then
-    tailscale serve --bg --https="$port" "$target"
+    tailscale serve "https:${port}" "$target"
     echo "Configured $label on https port $port -> $target"
   else
     echo "WARNING: $label ClusterIP not found, skipping"
