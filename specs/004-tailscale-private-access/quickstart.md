@@ -1,6 +1,6 @@
 # Quickstart: Tailscale Private Access
 
-**Tailnet**: `tailcffd2c.ts.net` | **Updated**: 2026-10-29
+**Tailnet**: `<tailnet>.ts.net` | **Updated**: 2026-10-29
 
 Platform UIs and `kubectl` are accessible over the Tailnet with no SSM tunnel or port-forwarding.
 
@@ -72,13 +72,13 @@ Allow ~5 additional minutes for ArgoCD to sync all applications.
 
 | Service | URL |
 |---|---|
-| ArgoCD | `https://ip-10-0-0-233.tailcffd2c.ts.net` |
-| Argo Workflows | `https://ip-10-0-0-233.tailcffd2c.ts.net:2746` |
-| Prometheus | `https://ip-10-0-0-233.tailcffd2c.ts.net:9090` |
-| httpbin | `https://ip-10-0-0-233.tailcffd2c.ts.net:8080` |
-| k3s API | `https://ip-10-0-0-233.tailcffd2c.ts.net:6443` |
+| ArgoCD | `https://<node>.<tailnet>.ts.net` |
+| Argo Workflows | `https://<node>.<tailnet>.ts.net:2746` |
+| Prometheus | `https://<node>.<tailnet>.ts.net:9090` |
+| httpbin | `https://<node>.<tailnet>.ts.net:8080` |
+| k3s API | `https://<node>.<tailnet>.ts.net:6443` |
 
-The `ip-10-0-0-233` segment changes on instance replacement. Find the current hostname via `tailscale status` or the admin console.
+The `<node>` segment changes on instance replacement. Find the current hostname via `tailscale status` or the admin console.
 
 ---
 

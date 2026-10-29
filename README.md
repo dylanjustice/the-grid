@@ -172,10 +172,10 @@ Once bootstrapped, platform UIs are available over HTTPS on your Tailnet:
 
 | Service | URL |
 |---|---|
-| ArgoCD | `https://<node>.tailcffd2c.ts.net` |
-| Argo Workflows | `https://<node>.tailcffd2c.ts.net:2746` |
-| Prometheus | `https://<node>.tailcffd2c.ts.net:9090` |
-| httpbin | `https://<node>.tailcffd2c.ts.net:8080` |
+| ArgoCD | `https://<node>.<tailnet>.ts.net` |
+| Argo Workflows | `https://<node>.<tailnet>.ts.net:2746` |
+| Prometheus | `https://<node>.<tailnet>.ts.net:9090` |
+| httpbin | `https://<node>.<tailnet>.ts.net:8080` |
 
 Find `<node>` via `tailscale status` or the Tailscale admin console.
 

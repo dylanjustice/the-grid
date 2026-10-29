@@ -44,13 +44,13 @@ These are the stable URLs once Tailscale Serve is configured. The `<node>` segme
 
 | Service | URL |
 |---|---|
-| ArgoCD | `https://<node>.tailcffd2c.ts.net` |
-| Argo Workflows | `https://<node>.tailcffd2c.ts.net:2746` |
-| Prometheus | `https://<node>.tailcffd2c.ts.net:9090` |
-| httpbin | `https://<node>.tailcffd2c.ts.net:8080` |
-| k3s API | `https://<node>.tailcffd2c.ts.net:6443` |
+| ArgoCD | `https://<node>.<tailnet>.ts.net` |
+| Argo Workflows | `https://<node>.<tailnet>.ts.net:2746` |
+| Prometheus | `https://<node>.<tailnet>.ts.net:9090` |
+| httpbin | `https://<node>.<tailnet>.ts.net:8080` |
+| k3s API | `https://<node>.<tailnet>.ts.net:6443` |
 
-`<node>` is the MagicDNS hostname (e.g. `ip-10-0-0-233`). Find it via `tailscale status` or the Tailscale admin console. The node segment changes on instance replacement; the tailnet domain (`tailcffd2c.ts.net`) is permanent.
+`<node>` is the MagicDNS hostname (e.g. `ip-10-0-0-233`). Find it via `tailscale status` or the Tailscale admin console. The node segment changes on instance replacement; the tailnet domain (`<tailnet>.ts.net`) is permanent.
 
 ---
 
