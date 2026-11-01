@@ -34,7 +34,7 @@ spec:
         await page.locator("#operations-tag-HTTP_Methods").click();
 
         await test.step("DELETE", async () => {
-          const op = page.locator('[id="operations-HTTP Methods-delete_delete"]');
+          const op = page.locator('[id="operations-HTTP_Methods-delete_delete"]');
           await op.waitFor();
           await op.click();
           await op.locator("button", { hasText: "Try it out" }).click();
@@ -43,7 +43,7 @@ spec:
         });
 
         await test.step("GET", async () => {
-          const op = page.locator('[id="operations-HTTP Methods-get_get"]');
+          const op = page.locator('[id="operations-HTTP_Methods-get_get"]');
           await op.click();
           await op.locator("button", { hasText: "Try it out" }).click();
           await op.locator("button", { hasText: "Execute" }).click();
@@ -51,7 +51,7 @@ spec:
         });
 
         await test.step("PATCH", async () => {
-          const op = page.locator('[id="operations-HTTP Methods-patch_patch"]');
+          const op = page.locator('[id="operations-HTTP_Methods-patch_patch"]');
           await op.click();
           await op.locator("button", { hasText: "Try it out" }).click();
           await op.locator("button", { hasText: "Execute" }).click();
@@ -59,7 +59,7 @@ spec:
         });
 
         await test.step("POST", async () => {
-          const op = page.locator('[id="operations-HTTP Methods-post_post"]');
+          const op = page.locator('[id="operations-HTTP_Methods-post_post"]');
           await op.click();
           await op.locator("button", { hasText: "Try it out" }).click();
           await op.locator("button", { hasText: "Execute" }).click();
@@ -67,7 +67,7 @@ spec:
         });
 
         await test.step("PUT", async () => {
-          const op = page.locator('[id="operations-HTTP Methods-put_put"]');
+          const op = page.locator('[id="operations-HTTP_Methods-put_put"]');
           await op.click();
           await op.locator("button", { hasText: "Try it out" }).click();
           await op.locator("button", { hasText: "Execute" }).click();
