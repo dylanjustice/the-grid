@@ -9,6 +9,7 @@ helm upgrade prometheus prometheus-community/prometheus --install --namespace th
 kubectl apply -f gitops/applications/argo-workflows.yaml
 kubectl apply -f gitops/applications/playwright-synthetics.yaml
 kubectl apply -f gitops/applications/httpbin.yaml
+kubectl apply -f gitops/applications/prometheus-pushgateway.yaml
 
 # Wait for ArgoCD and core workloads to become ready before configuring Tailscale Serve
 echo "Waiting for ArgoCD to be ready..."
