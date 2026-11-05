@@ -39,6 +39,7 @@ help:
 	@echo "  tunnel-stop           - (fallback) Stop all SSM tunnels"
 	@echo "  argo-ui               - (fallback) Port-forward Argo Workflows UI to https://localhost:2746"
 	@echo "  prometheus-ui         - (fallback) Port-forward Prometheus UI to https://localhost:9090"
+	@echo "  grafana-ui            - (fallback) Port-forward Grafana UI to http://localhost:3000"
 	@echo "  httpbin-ui            - (fallback) Port-forward httpbin UI to http://httpbin.the-grid-synthetics.svc.cluster.local:8080"
 	@echo "  argo-sync             - Force ArgoCD sync on all applications"
 	@echo "  k3s-destroy           - Destroy only the k3s instance to save cost"
@@ -156,6 +157,10 @@ argo-ui:
 prometheus-ui:
 	@echo "Port-forwarding Prometheus UI to http://localhost:9090..."
 	kubectl port-forward svc/prometheus-server -n the-grid-monitoring 9090:80
+
+grafana-ui:
+	@echo "Port-forwarding Grafana UI to http://localhost:3000..."
+	kubectl port-forward svc/grafana -n the-grid-monitoring 3000:80
 
 httpbin-ui:
 	@echo "Port-forwarding httpbin to http://httpbin.the-grid-synthetics.svc.cluster.local:8080..."
