@@ -75,7 +75,12 @@ func (r *SyntheticTestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if err := ctrl.SetControllerReference(syntheticTest, configMap, r.Scheme); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err := r.Create(ctx, configMap); err != nil && !errors.IsAlreadyExists(err) {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, configMap, func() error {
+		configMap.Data = map[string]string{
+			"test.spec.ts": syntheticTest.Spec.Source.Inline,
+		}
+		return ctrl.SetControllerReference(syntheticTest, configMap, r.Scheme)
+	}); err != nil {
 		return ctrl.Result{}, err
 	}
 

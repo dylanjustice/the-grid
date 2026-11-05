@@ -1,28 +1,33 @@
-argo-workflows:
-  enabled: true
+operator:
+  image: ""
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 128Mi
 
-# Bring your own scrape target
-pushgateway:
-  enabled: true
-  # or point at an existing one:
-  # externalUrl: http://my-pushgateway:9091
-
-# Runtime image (browsers + node_modules, no test files)
 runner:
-  image: ghcr.io/the-grid/runner:latest
+  image: ""
   resources:
     requests:
       cpu: 250m
       memory: 512Mi
 
-# Artifact storage
-artifacts:
-  enabled: true
-  bucket: my-artifacts-bucket
-  region: us-east-1
+workloadNamespace: the-grid-synthetics
 
-# UI
-ui:
+argo-workflows:
   enabled: true
-  auth:
-    mode: none # none | oidc (none ships first with a warning)
+
+pushgateway:
+  enabled: true
+  externalUrl: ""
+
+ui:
+  enabled: false
+
+artifacts:
+  enabled: false
+  bucket: ""
+  region: ""

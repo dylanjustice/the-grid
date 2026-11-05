@@ -10,8 +10,6 @@ spec:
   container:
     name: playwright
     env:
-      - name: PUSHGATEWAY_URL
-        value: "http://playwright-synthetics-prometheus-pushgateway.the-grid-synthetics.svc.cluster.local:9091"
       - name: GRID_ENV
         value: "production"
       - name: GRID_JOB_NAME
@@ -87,8 +85,6 @@ spec:
   container:
     name: playwright
     env:
-      - name: PUSHGATEWAY_URL
-        value: "http://playwright-synthetics-prometheus-pushgateway.the-grid-synthetics.svc.cluster.local:9091"
       - name: GRID_ENV
         value: "production"
       - name: GRID_JOB_NAME

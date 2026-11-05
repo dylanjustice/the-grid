@@ -6,6 +6,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -20,7 +21,7 @@ var _ = Describe("DefaultWorkflowBuilder", func() {
 	)
 
 	BeforeEach(func() {
-		builder = &DefaultWorkflowBuilder{}
+		builder = &DefaultWorkflowBuilder{RunnerImage: "test-runner:latest", PushgatewayURL: "http://pushgateway:9091"}
 		sa = "test-sa"
 		test = &gridv1alpha1.SyntheticTest{
 			ObjectMeta: metav1.ObjectMeta{
@@ -84,9 +85,43 @@ var _ = Describe("DefaultWorkflowBuilder", func() {
 			wf, err := builder.BuildWorkflow(context.Background(), test)
 			Expect(err).NotTo(HaveOccurred())
 			c := wf.Spec.Templates[0].Container
-			Expect(c.Image).To(Equal(defaultImage))
+			Expect(c.Image).To(Equal("test-runner:latest"))
 			Expect(c.Command).To(Equal(defaultCommand))
 			Expect(c.Name).To(Equal(defaultName))
+		})
+
+		It("injects PUSHGATEWAY_URL env var when PushgatewayURL is set", func() {
+			wf, err := builder.BuildWorkflow(context.Background(), test)
+			Expect(err).NotTo(HaveOccurred())
+			c := wf.Spec.Templates[0].Container
+			Expect(c.Env).To(ContainElement(
+				corev1.EnvVar{Name: "PUSHGATEWAY_URL", Value: "http://pushgateway:9091"},
+			))
+		})
+
+		It("does not overwrite a CR-level PUSHGATEWAY_URL with the builder default", func() {
+			test.Spec.Container.Env = []corev1.EnvVar{
+				{Name: "PUSHGATEWAY_URL", Value: "http://cr-override:9091"},
+			}
+			wf, err := builder.BuildWorkflow(context.Background(), test)
+			Expect(err).NotTo(HaveOccurred())
+			count := 0
+			for _, env := range wf.Spec.Templates[0].Container.Env {
+				if env.Name == "PUSHGATEWAY_URL" {
+					count++
+				}
+			}
+			Expect(count).To(Equal(1))
+			Expect(wf.Spec.Templates[0].Container.Env[0]).To(Equal(
+				corev1.EnvVar{Name: "PUSHGATEWAY_URL", Value: "http://cr-override:9091"},
+			))
+		})
+
+		It("uses CR container image over RunnerImage when both are set", func() {
+			test.Spec.Container.Image = "cr-override:latest"
+			wf, err := builder.BuildWorkflow(context.Background(), test)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(wf.Spec.Templates[0].Container.Image).To(Equal("cr-override:latest"))
 		})
 	})
 

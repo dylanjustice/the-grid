@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-operator:
+    name: Operator unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: synthetics-operator/go.mod
+      - name: Run tests
+        working-directory: synthetics-operator
+        run: go test ./internal/...
+
+  lint-chart:
+    name: Helm lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+      - name: Update dependencies
+        run: helm dependency update charts/the-grid-synthetics
+      - name: Lint chart
+        run: helm lint charts/the-grid-synthetics
+
+  build-operator-image:
+    name: Build operator image (no push)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: synthetics-operator
+          file: synthetics-operator/Dockerfile
+          push: false

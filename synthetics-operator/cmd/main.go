@@ -82,6 +82,10 @@ func main() {
 	flag.StringVar(&metricsCertKey, "metrics-cert-key", "tls.key", "The name of the metrics server key file.")
 	flag.BoolVar(&enableHTTP2, "enable-http2", false,
 		"If set, HTTP/2 will be enabled for the metrics and webhook servers")
+	var runnerImage string
+	var pushgatewayURL string
+	flag.StringVar(&runnerImage, "runner-image", "", "Default container image for runner pods (overridden by SyntheticTest spec.container.image)")
+	flag.StringVar(&pushgatewayURL, "pushgateway-url", "", "Pushgateway URL injected as PUSHGATEWAY_URL env var into every CronWorkflow")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -206,7 +210,7 @@ func main() {
 	if err := (&controller.SyntheticTestReconciler{
 		Client:          mgr.GetClient(),
 		Scheme:          mgr.GetScheme(),
-		WorkflowBuilder: &controller.DefaultWorkflowBuilder{},
+		WorkflowBuilder: &controller.DefaultWorkflowBuilder{RunnerImage: runnerImage, PushgatewayURL: pushgatewayURL},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "SyntheticTest")
 		os.Exit(1)

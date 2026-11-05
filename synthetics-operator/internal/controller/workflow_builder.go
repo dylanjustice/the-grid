@@ -12,7 +12,6 @@ import (
 )
 
 const (
-	defaultImage   = "393657359434.dkr.ecr.us-east-2.amazonaws.com/flynn/playwright-runner-js:latest"
 	defaultName    = "playwright"
 	testsMountPath = "/app/tests"
 )
@@ -33,8 +32,11 @@ type WorkflowBuilder interface {
 	BuildWorkflow(ctx context.Context, test *gridv1alpha1.SyntheticTest) (*wfv1.Workflow, error)
 }
 
-// DefaultWorkflowBuilder is the production WorkflowBuilder. Zero-value is ready to use.
-type DefaultWorkflowBuilder struct{}
+// DefaultWorkflowBuilder is the production WorkflowBuilder.
+type DefaultWorkflowBuilder struct {
+	RunnerImage    string
+	PushgatewayURL string
+}
 
 func (b *DefaultWorkflowBuilder) BuildCronWorkflow(_ context.Context, test *gridv1alpha1.SyntheticTest) (*wfv1.CronWorkflow, error) {
 	if test.Spec.Source.Inline == "" {
@@ -90,8 +92,20 @@ func (b *DefaultWorkflowBuilder) buildWorkflowSpec(test *gridv1alpha1.SyntheticT
 	configMapName := test.Name + "-config"
 
 	container := test.Spec.Container
-	if container.Image == "" {
-		container.Image = defaultImage
+	if container.Image == "" && b.RunnerImage != "" {
+		container.Image = b.RunnerImage
+	}
+	if b.PushgatewayURL != "" {
+		hasPushgatewayURL := false
+		for _, env := range container.Env {
+			if env.Name == "PUSHGATEWAY_URL" {
+				hasPushgatewayURL = true
+				break
+			}
+		}
+		if !hasPushgatewayURL {
+			container.Env = append([]corev1.EnvVar{{Name: "PUSHGATEWAY_URL", Value: b.PushgatewayURL}}, container.Env...)
+		}
 	}
 	if len(container.Command) == 0 {
 		container.Command = defaultCommand
