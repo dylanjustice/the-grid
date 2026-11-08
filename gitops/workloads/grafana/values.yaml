@@ -9,3 +9,5 @@ grafana:
           url: http://prometheus-server.the-grid-monitoring:80
           access: proxy
           isDefault: true
+  service:
+    port: 3000
