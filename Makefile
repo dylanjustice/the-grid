@@ -50,12 +50,6 @@ help:
 	@echo "  pushgateway-start     - Start a local Pushgateway container on :9091"
 	@echo "  pushgateway-stop      - Stop and remove the local Pushgateway container"
 	@echo "  test-reporter         - Run tests against local Pushgateway to validate reporter"
-	@echo "  operator-generate     - Generate CRD manifests and DeepCopy methods"
-	@echo "  operator-build        - Build the operator binary"
-	@echo "  operator-test         - Run operator unit tests"
-	@echo "  operator-docker-build - Build operator container image"
-	@echo "  operator-docker-push  - Push operator container image"
-	@echo "  operator-deploy       - Deploy operator to cluster"
 	@echo "  pull-artifact         - Download latest Playwright report from S3 (TEST_NAME=<name> OUTPUT_DIR=./playwright-report)"
 	@echo ""
 	@echo "Variables:"
@@ -208,24 +202,6 @@ test-reporter:
 	@echo "Running reporter validation against local Pushgateway..."
 	cd playwright-synthetics && PUSHGATEWAY_URL=http://localhost:$(PUSHGATEWAY_PORT) GRID_ENV=local npx playwright test
 
-# Operator targets
-operator-generate:
-	$(MAKE) -C synthetics-operator manifests generate
-
-operator-build:
-	$(MAKE) -C synthetics-operator build
-
-operator-test:
-	$(MAKE) -C synthetics-operator test
-
-operator-docker-build:
-	$(MAKE) -C synthetics-operator docker-build IMG=$(ECR_URL)/flynn/synthetics-operator:$(GIT_SHA)
-
-operator-docker-push:
-	$(MAKE) -C synthetics-operator docker-push IMG=$(ECR_URL)/flynn/synthetics-operator:$(GIT_SHA)
-
-operator-deploy:
-	$(MAKE) -C synthetics-operator deploy IMG=$(ECR_URL)/flynn/synthetics-operator:$(GIT_SHA)
 
 TEST_NAME ?=
 OUTPUT_DIR ?= ./playwright-report
