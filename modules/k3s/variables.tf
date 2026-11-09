@@ -28,3 +28,8 @@ variable "tailscale_advertise_routes" {
   type    = string
   default = ""
 }
+
+variable "ami_id" {
+  type    = string
+  default = ""
+}

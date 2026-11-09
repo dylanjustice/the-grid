@@ -86,5 +86,16 @@ sleep 30
 # Make kubeconfig readable
 chmod 644 /etc/rancher/k3s/k3s.yaml
 
+# Configure split DNS so the host OS can resolve *.svc.cluster.local.
+# This lets tailscale serve use service DNS names instead of ClusterIPs.
+COREDNS_IP=$(k3s kubectl get svc kube-dns -n kube-system -o jsonpath='{.spec.clusterIP}')
+mkdir -p /etc/systemd/resolved.conf.d
+cat <<EOF > /etc/systemd/resolved.conf.d/k3s-dns.conf
+[Resolve]
+DNS=${COREDNS_IP}
+Domains=~cluster.local
+EOF
+systemctl restart systemd-resolved
+
 # Optional: install kubectl symlink
 ln -s /usr/local/bin/k3s /usr/local/bin/kubectl || true

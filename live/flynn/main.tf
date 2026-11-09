@@ -3,11 +3,11 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 locals {
-  azs             = ["us-east-2a"]
-  az_count        = length(local.azs)
-  subnet_newbits  = var.subnet_prefix - var.vpc_cidr_prefix
-  public_subnets  = [for i in range(local.az_count) : cidrsubnet(var.vpc_cidr, local.subnet_newbits, i)]
-  repositories    = toset(["flynn/playwright-synthetics", "flynn/synthetics-operator", "flynn/playwright-runner-js"])
+  azs            = ["us-east-2a"]
+  az_count       = length(local.azs)
+  subnet_newbits = var.subnet_prefix - var.vpc_cidr_prefix
+  public_subnets = [for i in range(local.az_count) : cidrsubnet(var.vpc_cidr, local.subnet_newbits, i)]
+  repositories   = toset(["flynn/playwright-synthetics", "flynn/synthetics-operator", "flynn/playwright-runner-js"])
 }
 module "alpha_vpc" {
   source             = "terraform-aws-modules/vpc/aws"
@@ -27,7 +27,8 @@ module "k3s" {
   account_id = data.aws_caller_identity.current.account_id
 
   tailscale_enabled          = var.tailscale_enabled
-tailscale_advertise_routes = var.vpc_cidr
+  tailscale_advertise_routes = var.vpc_cidr
+  ami_id                     = "ami-05885933a0ea64f1b"
 }
 
 
