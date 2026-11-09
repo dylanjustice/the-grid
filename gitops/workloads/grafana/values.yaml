@@ -6,7 +6,7 @@ grafana:
       datasources:
         - name: Prometheus
           type: prometheus
-          url: http://prometheus-server.the-grid-monitoring:9090
+          url: http://prometheus-server.the-grid-monitoring:80
           access: proxy
           isDefault: true
   service:
