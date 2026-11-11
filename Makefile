@@ -1,216 +1,35 @@
-.PHONY: help docker-login docker-build terraform-init terraform-plan terraform-apply terraform-destroy argo-ui argo-sync k3s-destroy k3s-start test pushgateway-start pushgateway-stop test-reporter httpbin-ui tailscale-serve-setup pull-artifact
-
-# Variables
-AWS_ACCOUNT ?= $(shell aws sts get-caller-identity --query Account --output text)
-AWS_REGION ?= us-east-1
-ECR_REPO_NAME ?= flynn/playwright-synthetics
-RUNNER_ECR_REPO_NAME ?= flynn/playwright-runner-js
-TERRAFORM_AUTO_APPROVE ?= false
-GIT_SHA := $(shell git rev-parse --short HEAD)
-
-# Derive ECR URI from account and region
-ECR_URL = $(AWS_ACCOUNT).dkr.ecr.$(AWS_REGION).amazonaws.com
-ECR_REPO = $(ECR_URL)/$(ECR_REPO_NAME)
-RUNNER_ECR_REPO = $(ECR_URL)/$(RUNNER_ECR_REPO_NAME)
-
-# k3s instance connection
-INSTANCE_ID := $(shell terraform -chdir=live/flynn output -raw k3s_instance_id)
-AWS_REGION := us-east-2
-
-help:
-	@echo "Available targets:"
-	@echo "  docker-login          - Login to AWS ECR"
-	@echo "  docker-build-tests    - Build Docker image from src/"
-	@echo "  docker-push-tests     - Push Docker image to ECR"
-	@echo "  docker-build-runner"  - Build JS docker runner
-	@echo "  docker-push-runner"   - Push JS docker runner
-	@echo "  bootstrap-init        - Terraform init in bootstrap/"
-	@echo "  bootstrap-plan        - Terraform plan in bootstrap/"
-	@echo "  bootstrap-apply       - Terraform apply in bootstrap/"
-	@echo "  bootstrap-destroy     - Terraform destroy in bootstrap/"
-	@echo "  live-init             - Terraform init in live/flynn/"
-	@echo "  live-plan             - Terraform plan in live/flynn/"
-	@echo "  live-apply            - Terraform apply in live/flynn/"
-	@echo "  live-destroy          - Terraform destroy in live/flynn/"
-	@echo "  connect               - Connect to k3s instance via SSM Session Manager"
-	@echo "  get-kubeconfig        - Retrieve kubeconfig for k3s cluster (uses Tailscale if available)"
-	@echo "  tailscale-serve-setup - Configure Tailscale Serve for platform UIs (run once after bootstrap)"
-	@echo "  tunnel-start          - (fallback) Start SSM port forwarding to k3s API"
-	@echo "  tunnel-stop           - (fallback) Stop all SSM tunnels"
-	@echo "  argo-ui               - (fallback) Port-forward Argo Workflows UI to https://localhost:2746"
-	@echo "  prometheus-ui         - (fallback) Port-forward Prometheus UI to https://localhost:9090"
-	@echo "  grafana-ui            - (fallback) Port-forward Grafana UI to http://localhost:3000"
-	@echo "  httpbin-ui            - (fallback) Port-forward httpbin UI to http://httpbin.the-grid-synthetics.svc.cluster.local:8080"
-	@echo "  argo-sync             - Force ArgoCD sync on all applications"
-	@echo "  k3s-destroy           - Destroy only the k3s instance to save cost"
-	@echo "  k3s-start             - Recreate the k3s instance"
-	@echo "  k3s-bootstrap         - Bootstrap k3s cluster with necessary tools and configurations"
-	@echo "  test                  - Run Playwright tests headlessly"
-	@echo "  test-ui               - Run Playwright tests with interactive UI"
-	@echo "  pushgateway-start     - Start a local Pushgateway container on :9091"
-	@echo "  pushgateway-stop      - Stop and remove the local Pushgateway container"
-	@echo "  test-reporter         - Run tests against local Pushgateway to validate reporter"
-	@echo "  pull-artifact         - Download latest Playwright report from S3 (TEST_NAME=<name> OUTPUT_DIR=./playwright-report)"
-	@echo ""
-	@echo "Variables:"
-	@echo "  AWS_ACCOUNT (default: auto-detected)"
-	@echo "  AWS_REGION (default: us-east-1)"
-	@echo "  ECR_REPO_NAME (default: the-grid)"
-	@echo "  TERRAFORM_AUTO_APPROVE (default: false)"
-
-# Docker targets
-docker-login:
-	@echo "Logging in to ECR at $(ECR_URL)..."
-	aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(ECR_URL)
-
-docker-build-tests:
-	@echo "Building Docker image: $(ECR_REPO):$(GIT_SHA)..."
-	docker build -t $(ECR_REPO):$(GIT_SHA) -t $(ECR_REPO):latest playwright-synthetics/
-
-docker-push-tests: docker-build docker-login
-	@echo "Pushing Docker image to ECR..."
-	docker push $(ECR_REPO):$(GIT_SHA)
-	docker push $(ECR_REPO):latest
-
-docker-build-runner:
-	@echo "Building Docker image: $(RUNNER_ECR_REPO):$(GIT_SHA)..."
-	docker build -f runner/Dockerfile -t $(RUNNER_ECR_REPO):$(GIT_SHA) -t $(RUNNER_ECR_REPO):latest .
-
-docker-push-runner: docker-build docker-login
-	@echo "Pushing Docker image to ECR..."
-	docker push $(RUNNER_ECR_REPO):$(GIT_SHA)
-	docker push $(RUNNER_ECR_REPO):latest
-
-# Bootstrap Terraform targets
-bootstrap-init:
-	@echo "Running terraform init in bootstrap/..."
-	cd bootstrap && terraform init
-
-bootstrap-plan: bootstrap-init
-	@echo "Running terraform plan in bootstrap/..."
-	cd bootstrap && terraform plan -out=tfplan
-
-bootstrap-apply: bootstrap-plan
-	@echo "Running terraform apply in bootstrap/..."
-	cd bootstrap && terraform apply $(if $(filter true,$(TERRAFORM_AUTO_APPROVE)),-auto-approve,tfplan)
-
-bootstrap-destroy: bootstrap-init
-	@echo "Running terraform destroy in bootstrap/..."
-	cd bootstrap && terraform destroy $(if $(filter true,$(TERRAFORM_AUTO_APPROVE)),-auto-approve,)
-
-# Live (Flynn) Terraform targets
-live-init:
-	@echo "Running terraform init in live/flynn/..."
-	cd live/flynn && terraform init
-
-live-plan: live-init
-	@echo "Running terraform plan in live/flynn/..."
-	cd live/flynn && terraform plan -out=tfplan
-
-live-apply: live-plan
-	@echo "Running terraform apply in live/flynn/..."
-	cd live/flynn && terraform apply $(if $(filter true,$(TERRAFORM_AUTO_APPROVE)),-auto-approve,tfplan)
-
-live-destroy: live-init
-	@echo "Running terraform destroy in live/flynn/..."
-	cd live/flynn && terraform destroy $(if $(filter true,$(TERRAFORM_AUTO_APPROVE)),-auto-approve,)
-
-# Connect to k3s instance using SSM Session Manager
-connect:
-	aws ssm start-session \
-		--region $(AWS_REGION) \
-		--target $(INSTANCE_ID)
-
-get-kubeconfig:
-	./scripts/get-kubeconfig.sh
-
-tunnel-start:
-	@echo "Starting SSM port forward to $(INSTANCE_ID)..."
-	aws ssm start-session \
-		--region $(AWS_REGION) \
-		--target $(INSTANCE_ID) \
-		--document-name AWS-StartPortForwardingSession \
-		--parameters '{"portNumber":["6443"],"localPortNumber":["6443"]}' \
-		> tunnel.log 2>&1 &
-	@echo "Tunnel running in background."
-
-tunnel-stop:
-	@echo "Stopping all SSM tunnels..."
-	@PIDS=$$(pgrep -af "AWS-StartPortForwardingSession"); \
-	if [ -n "$$PIDS" ]; then \
-		echo "Killing: $$PIDS"; \
-		kill $$PIDS || true; \
-	else \
-		echo "No tunnel processes found."; \
-	fi
-
-argo-ui:
-	@echo "Port-forwarding Argo Workflows UI to https://localhost:2746..."
-	kubectl port-forward svc/argo-workflows-server -n the-grid-workflows 2746:2746
-
-prometheus-ui:
-	@echo "Port-forwarding Prometheus UI to http://localhost:9090..."
-	kubectl port-forward svc/prometheus-server -n the-grid-monitoring 9090:80
-
-grafana-ui:
-	@echo "Port-forwarding Grafana UI to http://localhost:3000..."
-	kubectl port-forward svc/grafana -n the-grid-monitoring 3000:80
-
-httpbin-ui:
-	@echo "Port-forwarding httpbin to http://httpbin.the-grid-synthetics.svc.cluster.local:8080..."
-	kubectl port-forward svc/httpbin -n the-grid-synthetics 8080:80
-
-ARGOCD_APPS := argo-workflows playwright-synthetics
-
-argo-sync:
-	@for app in $(ARGOCD_APPS); do \
-		echo "Syncing $$app..."; \
-		kubectl patch application $$app -n argocd --type merge \
-			-p "{\"operation\":{\"initiatedBy\":{\"username\":\"cli\"},\"sync\":{\"revision\":\"HEAD\"}}}"; \
-	done
-
-k3s-destroy: live-init
-	@echo "Destroying k3s instance..."
-	cd live/flynn && terraform destroy -target=module.k3s.aws_instance.k3s $(if $(filter true,$(TERRAFORM_AUTO_APPROVE)),-auto-approve,)
-
-k3s-bootstrap:
-	sh ./scripts/bootstrap-k3s.sh
-
-tailscale-serve-setup:
-	@echo "Configuring Tailscale Serve on the k3s instance..."
-	./scripts/tailscale-serve-setup.sh
-
-# Playwright targets
-test:
-	cd playwright-synthetics && npx playwright test
-test-ui:
-	cd playwright-synthetics && npx playwright test --ui
+.PHONY: help test test-ui pushgateway-start pushgateway-stop test-reporter pull-artifact
 
 PUSHGATEWAY_CONTAINER ?= grid-pushgateway
 PUSHGATEWAY_PORT ?= 9091
 
+TEST_NAME ?=
+OUTPUT_DIR ?= ./playwright-report
+
+help:
+	@echo "Available targets:"
+	@echo "  test               - Run Playwright tests headlessly"
+	@echo "  test-ui            - Run Playwright tests with interactive UI"
+	@echo "  pushgateway-start  - Start a local Pushgateway container on :9091"
+	@echo "  pushgateway-stop   - Stop and remove the local Pushgateway container"
+	@echo "  test-reporter      - Run tests against local Pushgateway to validate reporter"
+	@echo "  pull-artifact      - Download latest Playwright report from S3 (TEST_NAME=<name>)"
+
+test:
+	cd playwright-synthetics && npx playwright test
+
+test-ui:
+	cd playwright-synthetics && npx playwright test --ui
+
 pushgateway-start:
-	@echo "Starting Pushgateway on :$(PUSHGATEWAY_PORT)..."
 	docker run -d -p $(PUSHGATEWAY_PORT):9091 --name $(PUSHGATEWAY_CONTAINER) prom/pushgateway
 	@echo "Pushgateway running at http://localhost:$(PUSHGATEWAY_PORT)"
 
 pushgateway-stop:
-	@echo "Stopping Pushgateway..."
 	docker rm -f $(PUSHGATEWAY_CONTAINER) || true
 
 test-reporter:
-	@echo "Running reporter validation against local Pushgateway..."
 	cd playwright-synthetics && PUSHGATEWAY_URL=http://localhost:$(PUSHGATEWAY_PORT) GRID_ENV=local npx playwright test
-
-
-TEST_NAME ?=
-OUTPUT_DIR ?= ./playwright-report
 
 pull-artifact:
 	./scripts/pull-artifact.sh $(TEST_NAME) $(OUTPUT_DIR)
-
-# Convenience targets
-all-init: bootstrap-init live-init
-all-plan: bootstrap-plan live-plan
-all-apply: bootstrap-apply live-apply
-all-destroy: bootstrap-destroy live-destroy
