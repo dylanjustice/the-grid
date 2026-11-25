@@ -45,10 +45,6 @@ session-manager-plugin --version
 
 ```bash
 aws configure sso
-# SSO session name (Recommended): the-grid
-# SSO start URL [None]: https://d-90661fcf12.awsapps.com/start
-# SSO region [None]: us-east-1
-# SSO registration scopes [None]: sso:account:access
 ```
 
 Install and configure [Granted](https://granted.dev/) or [Assume](https://github.com/remotecom/assume) for SSO access:
@@ -170,12 +166,12 @@ make k3s-bootstrap
 
 Once bootstrapped, platform UIs are available over HTTPS on your Tailnet:
 
-| Service | URL |
-|---|---|
-| ArgoCD | `https://<node>.<tailnet>.ts.net` |
+| Service        | URL                                    |
+| -------------- | -------------------------------------- |
+| ArgoCD         | `https://<node>.<tailnet>.ts.net`      |
 | Argo Workflows | `https://<node>.<tailnet>.ts.net:2746` |
-| Prometheus | `https://<node>.<tailnet>.ts.net:9090` |
-| httpbin | `https://<node>.<tailnet>.ts.net:8080` |
+| Prometheus     | `https://<node>.<tailnet>.ts.net:9090` |
+| httpbin        | `https://<node>.<tailnet>.ts.net:8080` |
 
 Find `<node>` via `tailscale status` or the Tailscale admin console.
 
